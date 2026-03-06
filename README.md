@@ -1,4 +1,4 @@
-<h1 align="center">Compose Rich Editor</h1><br>
+<h1 align="center">Compose Rich Editor fork</h1><br>
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.1.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/compose-1.7.3-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-multiplatform)
