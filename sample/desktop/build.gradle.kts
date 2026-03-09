@@ -7,14 +7,14 @@ plugins {
 }
 
 kotlin {
-    jvm {
-        withJava()
-    }
-
-    sourceSets.jvmMain.dependencies {
-        implementation(projects.sample.common)
-        implementation(compose.desktop.currentOs)
-    }
+//    jvm {
+//        withJava()
+//    }
+//
+//    sourceSets.jvmMain.dependencies {
+//        implementation(projects.sample.common)
+//        implementation(compose.desktop.currentOs)
+//    }
 }
 
 compose.desktop {
