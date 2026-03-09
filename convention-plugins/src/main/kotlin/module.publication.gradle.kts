@@ -47,16 +47,44 @@ publishing {
     }
 }
 
+//signing {
+//    useInMemoryPgpKeys(
+//        System.getenv("OSSRH_GPG_SECRET_KEY_ID"),
+//        System.getenv("OSSRH_GPG_SECRET_KEY"),
+//        System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD"),
+//    )
+//    sign(publishing.publications)
+//}
+val signingKeyId = System.getenv("OSSRH_GPG_SECRET_KEY_ID")
+val signingKey = System.getenv("OSSRH_GPG_SECRET_KEY")
+val signingPassword = System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD")
+
 signing {
-    useInMemoryPgpKeys(
-        System.getenv("OSSRH_GPG_SECRET_KEY_ID"),
-        System.getenv("OSSRH_GPG_SECRET_KEY"),
-        System.getenv("OSSRH_GPG_SECRET_KEY_PASSWORD"),
-    )
-    sign(publishing.publications)
+
+    val hasSigningKeys =
+        signingKeyId != null &&
+                signingKey != null &&
+                signingPassword != null
+
+    if (hasSigningKeys) {
+        useInMemoryPgpKeys(
+            signingKeyId,
+            signingKey,
+            signingPassword
+        )
+
+        sign(publishing.publications)
+    }
 }
 
+
 // TODO: remove after https://youtrack.jetbrains.com/issue/KT-46466 is fixed
+//project.tasks.withType(AbstractPublishToMaven::class.java).configureEach {
+//    dependsOn(project.tasks.withType(Sign::class.java))
+//}
 project.tasks.withType(AbstractPublishToMaven::class.java).configureEach {
-    dependsOn(project.tasks.withType(Sign::class.java))
+    val signTasks = project.tasks.withType(Sign::class.java)
+    if (!signTasks.isEmpty()) {
+        dependsOn(signTasks)
+    }
 }
