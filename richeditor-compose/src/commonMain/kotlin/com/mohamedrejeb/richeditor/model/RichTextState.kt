@@ -3804,6 +3804,8 @@ public class RichTextState internal constructor(
         newParagraphs: List<RichParagraph>,
         position: Int
     ) {
+        commitCompositionIfNeeded()
+
         val position = position
             .coerceIn(0, annotatedString.text.length)
 
@@ -3820,16 +3822,29 @@ public class RichTextState internal constructor(
 
         val firstNewParagraph = newParagraphs.first()
 
-        val richSpan = getRichSpanByTextIndex(
+        /*val richSpan = getRichSpanByTextIndex(
             textIndex = position - 1,
             ignoreCustomFiltering = true,
-        )
-            ?: return
+        ) ?: return*/
+
+        val richSpan = getRichSpanByTextIndex(
+            textIndex = if (position == 0) 0 else position - 1,
+            ignoreCustomFiltering = true,
+        ) ?: return
 
         val targetParagraph = richSpan.paragraph
         val paragraphIndex = richParagraphList.indexOf(targetParagraph)
 
-        val sliceIndex = max(position, richSpan.textRange.min)
+
+        if (position == annotatedString.text.length) {
+            val newParagraph = RichParagraph()
+            richParagraphList.add(paragraphIndex + 1, newParagraph)
+            updateRichParagraphList()
+            return
+        }
+
+        //val sliceIndex = max(position, richSpan.textRange.min)
+        val sliceIndex = position
 
         val targetParagraphFirstHalf = targetParagraph
         val targetParagraphSecondHalf = targetParagraph.slice(
@@ -4093,5 +4108,18 @@ public class RichTextState internal constructor(
                 richTextState
             }
         )
+    }
+
+    //by ilya bobrov
+
+    private fun commitCompositionIfNeeded() {
+        val value = textFieldValue
+        val composition = value.composition
+
+        if (composition != null) {
+            textFieldValue = value.copy(
+                composition = null
+            )
+        }
     }
 }
