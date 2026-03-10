@@ -31,6 +31,6 @@ include(
 
     ":sample:android",
     ":sample:desktop",
-    ":sample:web",
+//    ":sample:web",
     ":sample:common",
 )

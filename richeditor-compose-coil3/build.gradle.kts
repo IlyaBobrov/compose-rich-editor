@@ -23,16 +23,16 @@ kotlin {
         }
     }
 
-//    jvm("desktop") {
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_11)
-//        }
-//    }
-//
-//    js(IR) {
-//        browser()
-//    }
+    jvm("desktop") {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+    }
+
+    js(IR) {
+        browser()
+    }
 //    @OptIn(ExperimentalWasmDsl::class)
 //    wasmJs {
 //        browser {
@@ -41,23 +41,23 @@ kotlin {
 //            }
 //        }
 //    }
-//
-//    iosX64()
-//    iosArm64()
-//    iosSimulatorArm64()
-//
-//    sourceSets.commonMain.dependencies {
-//        implementation(projects.richeditorCompose)
-//
-//        implementation(compose.ui)
-//        implementation(compose.foundation)
-//
-//        implementation(libs.coil.compose)
-//    }
-//
-//    sourceSets.commonTest.dependencies {
-//        implementation(kotlin("test"))
-//    }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets.commonMain.dependencies {
+        implementation(projects.richeditorCompose)
+
+        implementation(compose.ui)
+        implementation(compose.foundation)
+
+        implementation(libs.coil.compose)
+    }
+
+    sourceSets.commonTest.dependencies {
+        implementation(kotlin("test"))
+    }
 }
 
 android {

@@ -24,14 +24,14 @@ kotlin {
         }
     }
 
-//    jvm("desktop") {
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_11)
-//        }
-//    }
-//
-//    js(IR).browser()
+    jvm("desktop") {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+    }
+
+    js(IR).browser()
 //    @OptIn(ExperimentalWasmDsl::class)
 //    wasmJs {
 //        browser {
@@ -40,35 +40,35 @@ kotlin {
 //            }
 //        }
 //    }
-//
-//    iosX64()
-//    iosArm64()
-//    iosSimulatorArm64()
-//
-//    sourceSets.commonMain.dependencies {
-//        implementation(compose.runtime)
-//        implementation(compose.foundation)
-//        implementation(compose.material)
-//        implementation(compose.material3)
-//
-//        // HTML parsing library
-//        implementation(libs.ksoup.html)
-//        implementation(libs.ksoup.entities)
-//
-//        // Markdown parsing library
-//        implementation(libs.jetbrains.markdown)
-//    }
-//
-//    sourceSets.commonTest.dependencies {
-//        implementation(kotlin("test"))
-//        @OptIn(ExperimentalComposeLibrary::class)
-//        implementation(compose.uiTest)
-//    }
-//
-//    sourceSets.named("desktopTest").dependencies {
-//        implementation(compose.desktop.uiTestJUnit4)
-//        implementation(compose.desktop.currentOs)
-//    }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets.commonMain.dependencies {
+        implementation(compose.runtime)
+        implementation(compose.foundation)
+        implementation(compose.material)
+        implementation(compose.material3)
+
+        // HTML parsing library
+        implementation(libs.ksoup.html)
+        implementation(libs.ksoup.entities)
+
+        // Markdown parsing library
+        implementation(libs.jetbrains.markdown)
+    }
+
+    sourceSets.commonTest.dependencies {
+        implementation(kotlin("test"))
+        @OptIn(ExperimentalComposeLibrary::class)
+        implementation(compose.uiTest)
+    }
+
+    sourceSets.named("desktopTest").dependencies {
+        implementation(compose.desktop.uiTestJUnit4)
+        implementation(compose.desktop.currentOs)
+    }
 }
 
 android {

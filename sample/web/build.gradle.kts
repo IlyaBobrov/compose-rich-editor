@@ -7,18 +7,18 @@ plugins {
 }
 
 kotlin {
-//    js(IR) {
-//        browser()
-//        binaries.executable()
-//    }
-//
+    js(IR) {
+        browser()
+        binaries.executable()
+    }
+
 //    @OptIn(ExperimentalWasmDsl::class)
 //    wasmJs {
 //        browser()
 //        binaries.executable()
 //    }
-//
-//    sourceSets.commonMain.dependencies {
-//        implementation(projects.sample.common)
-//    }
+
+    sourceSets.commonMain.dependencies {
+        implementation(projects.sample.common)
+    }
 }
