@@ -294,7 +294,7 @@ public fun BasicRichTextEditor(
     }
 }
 
-internal expect fun Modifier.adjustTextIndicatorOffset(
+public expect fun Modifier.adjustTextIndicatorOffset(
     state: RichTextState,
     contentPadding: PaddingValues,
     density: Density,
@@ -302,7 +302,7 @@ internal expect fun Modifier.adjustTextIndicatorOffset(
     scope: CoroutineScope,
 ): Modifier
 
-internal suspend fun adjustTextIndicatorOffset(
+public suspend fun adjustTextIndicatorOffset(
     pressPosition: Offset,
     state: RichTextState,
     topPadding: Float,

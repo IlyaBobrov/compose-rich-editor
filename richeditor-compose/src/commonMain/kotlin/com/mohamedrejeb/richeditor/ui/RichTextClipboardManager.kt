@@ -20,7 +20,7 @@ import kotlin.math.min
  * @param richTextState The [RichTextState] to be handled.
  * @param clipboardManager The [ClipboardManager] to delegate the rest of the work to.
  */
-internal class RichTextClipboardManager(
+public class RichTextClipboardManager(
     private val richTextState: RichTextState,
     private val clipboardManager: ClipboardManager
 ): ClipboardManager {

@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.CoroutineScope
 
-internal actual fun Modifier.adjustTextIndicatorOffset(
+public actual fun Modifier.adjustTextIndicatorOffset(
     state: RichTextState,
     contentPadding: PaddingValues,
     density: Density,

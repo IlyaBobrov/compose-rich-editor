@@ -49,6 +49,10 @@ public fun rememberRichTextState(): RichTextState {
     }
 }
 
+public fun test1() {
+
+}
+
 @OptIn(ExperimentalRichTextApi::class)
 public class RichTextState internal constructor(
     initialRichParagraphList: List<RichParagraph>,
@@ -56,8 +60,8 @@ public class RichTextState internal constructor(
     public constructor() : this(listOf(RichParagraph()))
 
     internal val richParagraphList = mutableStateListOf<RichParagraph>()
-    internal var visualTransformation: VisualTransformation by mutableStateOf(VisualTransformation.None)
-    internal var textFieldValue by mutableStateOf(TextFieldValue())
+    public var visualTransformation: VisualTransformation by mutableStateOf(VisualTransformation.None)
+    public var textFieldValue: TextFieldValue by mutableStateOf(TextFieldValue())
         private set
 
     internal val inlineContentMap = mutableStateMapOf<String, InlineTextContent>()
@@ -83,7 +87,7 @@ public class RichTextState internal constructor(
 
     public val composition: TextRange? get() = textFieldValue.composition
 
-    internal var singleParagraphMode by mutableStateOf(false)
+    public var singleParagraphMode: Boolean by mutableStateOf(false)
 
     internal var textLayoutResult: TextLayoutResult? by mutableStateOf(null)
         private set
@@ -1525,7 +1529,7 @@ public class RichTextState internal constructor(
      *
      * @param newTextFieldValue the new text field value.
      */
-    internal fun onTextFieldValueChange(newTextFieldValue: TextFieldValue) {
+    public fun onTextFieldValueChange(newTextFieldValue: TextFieldValue) {
         tempTextFieldValue = newTextFieldValue
 
         if (tempTextFieldValue.text.length > textFieldValue.text.length)
@@ -1677,6 +1681,13 @@ public class RichTextState internal constructor(
             startIndex = startTypeIndex,
             endIndex = startTypeIndex + typedCharsCount,
         )
+
+        if (typedText == "\n") {
+            // Принудительно очищаем composition в TextFieldValue перед тем,
+            // как позволить параграфам перестроиться
+            tempTextFieldValue = tempTextFieldValue.copy(composition = null)
+        }
+
         val previousIndex = startTypeIndex - 1
 
         val activeRichSpan = getOrCreateRichSpanByTextIndex(previousIndex)
@@ -3226,7 +3237,7 @@ public class RichTextState internal constructor(
         }
     }
 
-    internal fun onTextLayout(
+    public fun onTextLayout(
         textLayoutResult: TextLayoutResult,
         density: Density,
     ) {
