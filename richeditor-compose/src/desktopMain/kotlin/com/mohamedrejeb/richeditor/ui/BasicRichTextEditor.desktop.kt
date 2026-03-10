@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
-internal actual fun Modifier.adjustTextIndicatorOffset(
+public actual fun Modifier.adjustTextIndicatorOffset(
     state: RichTextState,
     contentPadding: PaddingValues,
     density: Density,
