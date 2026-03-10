@@ -3806,8 +3806,13 @@ public class RichTextState internal constructor(
     ) {
         commitCompositionIfNeeded()
 
-        val position = position
-            .coerceIn(0, annotatedString.text.length)
+        val beforeText = annotatedString.text.substring(0, position)
+        val afterText = annotatedString.text.substring(position)
+        val sanitizedText = beforeText.trimEnd() + afterText
+        textFieldValue = textFieldValue.copy(text = sanitizedText, selection = TextRange(position))
+
+
+        val position = position.coerceIn(0, annotatedString.text.length)
 
         if (newParagraphs.isEmpty())
             return
@@ -4113,13 +4118,12 @@ public class RichTextState internal constructor(
     //by ilya bobrov
 
     private fun commitCompositionIfNeeded() {
-        val value = textFieldValue
-        val composition = value.composition
-
-        if (composition != null) {
-            textFieldValue = value.copy(
-                composition = null
-            )
+        val compositionRange = textFieldValue.composition
+        if (compositionRange != null) {
+            val composedText = textFieldValue.text.substring(compositionRange.min, compositionRange.max)
+            replaceTextRange(compositionRange, composedText)
+            // После коммита очищаем составление
+            textFieldValue = textFieldValue.copy(composition = null)
         }
     }
 }
