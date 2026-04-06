@@ -1,4 +1,7 @@
 jdk:
   - openjdk17
+before_install:
+  - sdk install java 17.0.10-tem
+  - sdk use java 17.0.10-tem
 install:
-  - ./gradlew :richeditor-compose:assembleRelease :richeditor-compose-coil3:assembleRelease
+  - ./gradlew publishToMavenLocal
