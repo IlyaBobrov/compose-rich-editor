@@ -1,7 +1,5 @@
 package com.mohamedrejeb.richeditor.ui.material3
 
-import androidx.compose.material3.*
-import androidx.compose.material3.Typography
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -17,6 +15,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
@@ -32,6 +36,9 @@ import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults.OutlinedRichTextEditorDecorationBox
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults.RichTextEditorDecorationBox
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults.indicatorLine
 import com.mohamedrejeb.richeditor.ui.material3.tokens.FiledRichTextEditorTokens
 import com.mohamedrejeb.richeditor.ui.material3.tokens.OutlinedRichTextEditorTokens
 
@@ -178,7 +185,8 @@ public object RichTextEditorDefaults {
         Box(
             Modifier
                 .border(borderStroke.value, shape)
-                .background(colors.containerColor().value, shape))
+                .background(colors.containerColor().value, shape)
+        )
     }
 
     /**
@@ -532,7 +540,13 @@ public object RichTextEditorDefaults {
                 richTextEditorWithLabelPadding()
             },
         container: @Composable () -> Unit = {
-            FilledContainerBox(enabled, isError, interactionSource, colors, shape)
+            FilledContainerBox(
+                enabled = enabled,
+                isError = isError,
+                interactionSource = interactionSource,
+                colors = colors,
+                shape = shape
+            )
         }
     ) {
         CommonDecorationBox(

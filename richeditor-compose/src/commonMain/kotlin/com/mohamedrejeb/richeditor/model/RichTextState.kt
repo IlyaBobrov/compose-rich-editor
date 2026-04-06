@@ -1,10 +1,15 @@
 package com.mohamedrejeb.richeditor.model
 
 import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
@@ -17,23 +22,43 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.coerceIn
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.paragraph.RichParagraph
-import com.mohamedrejeb.richeditor.paragraph.type.*
+import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableListLevel
+import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableStartTextWidth
+import com.mohamedrejeb.richeditor.paragraph.type.DefaultParagraph
+import com.mohamedrejeb.richeditor.paragraph.type.OrderedList
+import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType
 import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType.Companion.startText
+import com.mohamedrejeb.richeditor.paragraph.type.UnorderedList
 import com.mohamedrejeb.richeditor.parser.html.RichTextStateHtmlParser
 import com.mohamedrejeb.richeditor.parser.markdown.RichTextStateMarkdownParser
-import com.mohamedrejeb.richeditor.utils.*
+import com.mohamedrejeb.richeditor.utils.append
+import com.mohamedrejeb.richeditor.utils.customMerge
+import com.mohamedrejeb.richeditor.utils.getCommonRichStyle
+import com.mohamedrejeb.richeditor.utils.getCommonStyle
+import com.mohamedrejeb.richeditor.utils.getCommonType
+import com.mohamedrejeb.richeditor.utils.isSpecifiedFieldsEquals
+import com.mohamedrejeb.richeditor.utils.removeRange
+import com.mohamedrejeb.richeditor.utils.toText
+import com.mohamedrejeb.richeditor.utils.unmerge
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -3685,6 +3710,7 @@ public class RichTextState internal constructor(
     public fun setHtml(html: String): RichTextState {
         val richParagraphList = RichTextStateHtmlParser.encode(html).richParagraphList
         updateRichParagraphList(richParagraphList)
+        //textFieldValue = textFieldValue.copy(selection = TextRange(0))
         return this
     }
 
@@ -3742,6 +3768,7 @@ public class RichTextState internal constructor(
     public fun setMarkdown(markdown: String): RichTextState {
         val richParagraphList = RichTextStateMarkdownParser.encode(markdown).richParagraphList
         updateRichParagraphList(richParagraphList)
+        //textFieldValue = textFieldValue.copy(selection = TextRange(0))
         return this
     }
 
@@ -3974,9 +4001,15 @@ public class RichTextState internal constructor(
             }
         }
 
+        /*val selectionIndex =
+            (textFieldValue.selection.min + (annotatedString.text.length - beforeTextLength)).coerceIn(0, annotatedString.text.length)*/
+
         val selectionIndex =
-            (textFieldValue.selection.min + (annotatedString.text.length - beforeTextLength))
-                .coerceIn(0, annotatedString.text.length)
+            if (beforeTextLength == 0)
+                textFieldValue.selection.min.coerceIn(0, annotatedString.text.length)
+            else
+                (textFieldValue.selection.min + (annotatedString.text.length - beforeTextLength))
+                    .coerceIn(0, annotatedString.text.length)
 
         styledRichSpanList.clear()
         textFieldValue = TextFieldValue(
