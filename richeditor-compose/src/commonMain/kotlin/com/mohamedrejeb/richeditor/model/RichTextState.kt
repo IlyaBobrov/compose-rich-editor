@@ -44,6 +44,7 @@ import com.mohamedrejeb.richeditor.paragraph.RichParagraph
 import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableListLevel
 import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableStartTextWidth
 import com.mohamedrejeb.richeditor.paragraph.type.DefaultParagraph
+import com.mohamedrejeb.richeditor.paragraph.type.Heading
 import com.mohamedrejeb.richeditor.paragraph.type.OrderedList
 import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType
 import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType.Companion.startText
@@ -239,6 +240,10 @@ public class RichTextState internal constructor(
     public var isUnorderedList: Boolean by mutableStateOf(currentRichParagraphType is UnorderedList)
         private set
     public var isOrderedList: Boolean by mutableStateOf(currentRichParagraphType is OrderedList)
+        private set
+    public var isHeading: Boolean by mutableStateOf(currentRichParagraphType is Heading)
+        private set
+    public var currentHeadingLevel: Int by mutableStateOf((currentRichParagraphType as? Heading)?.level ?: 0)
         private set
     public var isList: Boolean by mutableStateOf(isUnorderedList || isOrderedList)
         private set
@@ -976,6 +981,121 @@ public class RichTextState internal constructor(
         paragraphs.fastForEach { paragraph ->
             removeUnorderedList(paragraph)
         }
+    }
+
+    /**
+     * Toggles the heading type of the current selection.
+     *
+     * @param level the level of the heading.
+     */
+    /**
+     * Toggles the heading type of the current selection.
+     *
+     * @param level the level of the heading.
+     */
+    public fun toggleHeading(level: Int) {
+        if (singleParagraphMode) return
+
+        val selectedRange = selection
+        val paragraphs = getRichParagraphListByTextRange(selectedRange)
+        if (paragraphs.isEmpty()) return
+
+        val isFirstParagraphMatchingHeading =
+            paragraphs.first().type is Heading && (paragraphs.first().type as Heading).level == level
+
+        if (selectedRange.collapsed) {
+            applyHeadingLogic(paragraphs, level, isFirstParagraphMatchingHeading)
+            return
+        }
+
+        if (!isFirstParagraphMatchingHeading && paragraphs.size == 1) {
+            val paragraph = paragraphs.first()
+            val paragraphRange = paragraph.getTextRange()
+
+            if (selectedRange.min > paragraphRange.min || selectedRange.max < paragraphRange.max) {
+                var newText = textFieldValue.text
+                var startShift = 0
+
+                // (не на самой границе paragraphRange.max), иначе лишний \n съедает символ.
+                if (selectedRange.max < paragraphRange.max) {
+                    val maxIdx = selectedRange.max.coerceAtMost(newText.length)
+                    //newText = newText.substring(0, maxIdx) + "\n" + newText.substring(maxIdx)
+                    insertParagraphs(
+                        listOf(RichParagraph(), RichParagraph()),
+                        maxIdx
+                    )
+                }
+
+                // 2. Затем обрабатываем НАЧАЛО
+                if (selectedRange.min > paragraphRange.min) {
+                    val minIdx = selectedRange.min.coerceAtMost(newText.length)
+//                    newText = newText.substring(0, minIdx) + "\n" + newText.substring(minIdx)
+                    startShift++
+
+                    insertParagraphs(
+                        listOf(RichParagraph(), RichParagraph()),
+                        minIdx
+                    )
+                }
+
+                // Корректируем выделение с учётом обоих сдвигов
+                val newSelection = TextRange(
+                    selectedRange.min + startShift,
+                    selectedRange.max + startShift
+                )
+
+                // 3. Обновляем текст и состояние параграфов
+                updateTextFieldValue(textFieldValue.copy(/*text = newText,*/ selection = newSelection))
+
+                // 4. После updateTextFieldValue список параграфов изменился.
+                // Получаем актуальный список для нового выделения.
+                val updatedParagraphs = getRichParagraphListByTextRange(newSelection)
+
+                // Применяем заголовок к новым параграфам напрямую
+                applyHeadingLogic(updatedParagraphs, level, false)
+                return
+            }
+        }
+
+        // Обычный случай (выделение уже охватывает целые параграфы или их несколько)
+        applyHeadingLogic(paragraphs, level, isFirstParagraphMatchingHeading)
+    }
+
+    private fun getHead(level: Int): SpanStyle = when (level) {
+            1 -> com.mohamedrejeb.richeditor.parser.utils.H1SpanStyle
+            2 -> com.mohamedrejeb.richeditor.parser.utils.H2SpanStyle
+            3 -> com.mohamedrejeb.richeditor.parser.utils.H3SpanStyle
+            4 -> com.mohamedrejeb.richeditor.parser.utils.H4SpanStyle
+            5 -> com.mohamedrejeb.richeditor.parser.utils.H5SpanStyle
+            6 -> com.mohamedrejeb.richeditor.parser.utils.H6SpanStyle
+            else -> SpanStyle()
+        }
+
+
+    /**
+     * Вспомогательный метод, чтобы не дублировать код и не вызывать рекурсию
+     */
+    private fun applyHeadingLogic(paragraphs: List<RichParagraph>, level: Int, isOff: Boolean) {
+        val headingStyle = getHead(level)
+
+        paragraphs.fastForEach { paragraph ->
+            val currentType = paragraph.type
+            val paragraphRange = paragraph.getTextRange()
+
+            if (isOff) {
+                resetParagraphType(paragraph)
+                removeSpanStyle(headingStyle, paragraphRange)
+            } else {
+                if (currentType is Heading && currentType.level != level) {
+                    val oldStyle = getHead(currentType.level)
+                    removeSpanStyle(oldStyle, paragraphRange)
+                }
+
+                updateParagraphType(paragraph, Heading(level))
+                addSpanStyle(headingStyle, paragraphRange)
+            }
+        }
+        updateAnnotatedString()
     }
 
     public fun toggleOrderedList() {
@@ -3241,6 +3361,8 @@ public class RichTextState internal constructor(
                         ?: RichParagraph.DefaultParagraphStyle
             isUnorderedList = richParagraph?.type is UnorderedList
             isOrderedList = richParagraph?.type is OrderedList
+            isHeading = richParagraph?.type is Heading
+            currentHeadingLevel = (richParagraph?.type as? Heading)?.level ?: 0
             isList = isUnorderedList || isOrderedList
             canIncreaseListLevel = richParagraph?.let { canIncreaseListLevel(listOf(it)) } == true
             canDecreaseListLevel = richParagraph?.let { canDecreaseListLevel(listOf(it)) } == true
@@ -3256,6 +3378,8 @@ public class RichTextState internal constructor(
 
             isUnorderedList = richParagraphList.all { it.type is UnorderedList }
             isOrderedList = richParagraphList.all { it.type is OrderedList }
+            isHeading = richParagraphList.all { it.type is Heading }
+            currentHeadingLevel = if (isHeading) (richParagraphList.firstOrNull()?.type as? Heading)?.level ?: 0 else 0
             isList = richParagraphList.all { it.type is UnorderedList || it.type is OrderedList }
             canIncreaseListLevel = canIncreaseListLevel(richParagraphList)
             canDecreaseListLevel = canDecreaseListLevel(richParagraphList)

@@ -143,6 +143,8 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
                     var paragraphType: ParagraphType = DefaultParagraph()
                     if (name == "li" && lastOpenedTag != null) {
                         paragraphType = encodeHtmlElementToRichParagraphType(lastOpenedTag, currentListLevel)
+                    }else if (name.startsWith("h") && name.length == 2 && name[1].isDigit()) {
+                        paragraphType = Heading(name[1].digitToInt())
                     }
                     val cssParagraphStyle = CssEncoder.parseCssStyleMapToParagraphStyle(cssStyleMap, attributes)
 
@@ -196,23 +198,25 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
 
                     lineBreakParagraphIndexSet.add(richParagraphList.lastIndex)
 
+                    currentRichSpan = null
+
                     // Keep the same style when having a line break in the middle of a paragraph,
                     // Ex: <h1>Hello<br>World!</h1>
-                    if (isLastOpenedTagBlockElement && !isCurrentRichParagraphBlank)
-                        currentRichSpan?.let { richSpan ->
-                            val newRichSpan = richSpan.copy(
-                                text = "",
-                                textRange = TextRange.Zero,
-                                paragraph = newParagraph,
-                                children = mutableListOf(),
-                            )
-
-                            newParagraph.children.add(newRichSpan)
-
-                            currentRichSpan = newRichSpan
-                        }
-                    else
-                        currentRichSpan = null
+//                    if (isLastOpenedTagBlockElement && !isCurrentRichParagraphBlank)
+//                        currentRichSpan?.let { richSpan ->
+//                            val newRichSpan = richSpan.copy(
+//                                text = "",
+//                                textRange = TextRange.Zero,
+//                                paragraph = newParagraph,
+//                                children = mutableListOf(),
+//                            )
+//
+//                            newParagraph.children.add(newRichSpan)
+//
+//                            currentRichSpan = newRichSpan
+//                        }
+//                    else
+//                        currentRichSpan = null
                 }
             }
             .onCloseTag { name, _ ->
@@ -600,6 +604,7 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
         return when (richParagraphType) {
             is UnorderedList -> "ul"
             is OrderedList -> "ol"
+            is Heading -> "h${richParagraphType.level}"
             else -> "p"
         }
     }
