@@ -3,23 +3,39 @@ package com.mohamedrejeb.richeditor.parser.html
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.fastForEachIndexed
+import androidx.compose.ui.util.fastForEachReversed
 import com.mohamedrejeb.ksoup.entities.KsoupEntities
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlHandler
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlParser
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
-import com.mohamedrejeb.richeditor.model.*
+import com.mohamedrejeb.richeditor.model.RichSpan
+import com.mohamedrejeb.richeditor.model.RichSpanStyle
+import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.paragraph.RichParagraph
+import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableListLevel
 import com.mohamedrejeb.richeditor.paragraph.type.DefaultParagraph
+import com.mohamedrejeb.richeditor.paragraph.type.Heading
 import com.mohamedrejeb.richeditor.paragraph.type.OrderedList
 import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType
 import com.mohamedrejeb.richeditor.paragraph.type.UnorderedList
 import com.mohamedrejeb.richeditor.parser.RichTextStateParser
-import com.mohamedrejeb.richeditor.parser.utils.*
+import com.mohamedrejeb.richeditor.parser.utils.BoldSpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H1SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H2SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H3SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H4SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H5SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H6SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.ItalicSpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.MarkSpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.SmallSpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.StrikethroughSpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.SubscriptSpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.SuperscriptSpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.UnderlineSpanStyle
 import com.mohamedrejeb.richeditor.utils.customMerge
-import androidx.compose.ui.util.fastForEach
-import androidx.compose.ui.util.fastForEachIndexed
-import androidx.compose.ui.util.fastForEachReversed
-import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableListLevel
 
 internal object RichTextStateHtmlParser : RichTextStateParser<String> {
 
@@ -275,6 +291,12 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
             val isParagraphEmpty = richParagraph.isEmpty()
             val paragraphGroupTagName = decodeHtmlElementFromRichParagraphType(richParagraph.type)
 
+            val isLineBreak = richParagraph.children.size == 1 && richParagraph.children.first().text.isBlank()
+            if (isLineBreak) {
+                builder.append("<br>")
+                return@fastForEachIndexed
+            }
+
             val paragraphLevel =
                 if (richParagraphType is ConfigurableListLevel)
                     richParagraphType.level
@@ -381,9 +403,14 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
                     builder.append("<$BrElement>")
             } else {
                 // Create paragraph tag name
+                val headingLevel = richParagraph.getHeadingLevel()
+
                 val paragraphTagName =
-                    if (paragraphGroupTagName == "ol" || paragraphGroupTagName == "ul") "li"
-                    else "p"
+                    when {
+                        paragraphGroupTagName == "ol" || paragraphGroupTagName == "ul" -> "li"
+                        headingLevel != null -> "h$headingLevel"
+                        else -> "p"
+                    }
 
                 // Create paragraph css
                 val paragraphCssMap = CssDecoder.decodeParagraphStyleToCssStyleMap(richParagraph.paragraphStyle)
@@ -391,7 +418,11 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
 
                 // Append paragraph opening tag
                 builder.append("<$paragraphTagName")
-                if (paragraphCss.isNotBlank()) builder.append(" style=\"$paragraphCss\"")
+
+                if (headingLevel == null && paragraphCss.isNotBlank()) {
+                    builder.append(" style=\"$paragraphCss\"")
+                }
+
                 builder.append(">")
 
                 // Append paragraph children
@@ -441,6 +472,7 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
         val htmlStyleFormat = CssDecoder.decodeSpanStyleToHtmlStylingFormat(richSpan.spanStyle)
         val spanCss = CssDecoder.decodeCssStyleMap(htmlStyleFormat.cssStyleMap)
         val htmlTags = htmlStyleFormat.htmlTags.filter { it !in parentFormattingTags }
+            .filter { it !in listOf("h1", "h2", "h3", "h4", "h5", "h6") }
 
         val isRequireOpeningTag = tagName != "span" || tagAttributes.isNotEmpty() || spanCss.isNotEmpty()
 
@@ -456,7 +488,7 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
         }
 
         // Append text
-        stringBuilder.append(KsoupEntities.encodeHtml(richSpan.text))
+        stringBuilder.append(escapeHtml(richSpan.text))
 
         // Append children
         richSpan.children.fastForEach { child ->
@@ -565,6 +597,27 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
         }
     }
 
+    private fun RichParagraph.getHeadingLevel(): Int? {
+        val styles = children.map { it.spanStyle }
+
+        return when {
+            styles.any { it == H1SpanStyle } -> 1
+            styles.any { it == H2SpanStyle } -> 2
+            styles.any { it == H3SpanStyle } -> 3
+            styles.any { it == H4SpanStyle } -> 4
+            styles.any { it == H5SpanStyle } -> 5
+            styles.any { it == H6SpanStyle } -> 6
+            else -> null
+        }
+    }
+
+    private fun escapeHtml(text: String): String {
+        return text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+    }
+
 }
 
 /**
@@ -608,12 +661,12 @@ internal val htmlElementsSpanStyleDecodeMap = mapOf(
     SuperscriptSpanStyle to "sup",
     MarkSpanStyle to "mark",
     SmallSpanStyle to "small",
-    H1SpanStyle to "h1",
-    H2SpanStyle to "h2",
-    H3SpanStyle to "h3",
-    H4SpanStyle to "h4",
-    H5SpanStyle to "h5",
-    H6SpanStyle to "h6",
+//    H1SpanStyle to "h1",
+//    H2SpanStyle to "h2",
+//    H3SpanStyle to "h3",
+//    H4SpanStyle to "h4",
+//    H5SpanStyle to "h5",
+//    H6SpanStyle to "h6",
 )
 
 internal const val CodeSpanTagName = "code"

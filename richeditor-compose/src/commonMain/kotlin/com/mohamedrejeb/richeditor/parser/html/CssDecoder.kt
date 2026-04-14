@@ -14,8 +14,13 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.isUnspecified
+import com.mohamedrejeb.richeditor.parser.utils.H1SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H2SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H3SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H4SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H5SpanStyle
+import com.mohamedrejeb.richeditor.parser.utils.H6SpanStyle
 import com.mohamedrejeb.richeditor.parser.utils.MarkBackgroundColor
-import com.mohamedrejeb.richeditor.parser.utils.SmallFontSize
 import com.mohamedrejeb.richeditor.utils.maxDecimals
 import kotlin.math.roundToInt
 
@@ -43,16 +48,15 @@ internal object CssDecoder {
         val cssStyleMap = mutableMapOf<String, String>()
         val htmlTags = mutableListOf<String>()
 
+        val isHeading = spanStyle == H1SpanStyle || spanStyle == H2SpanStyle || spanStyle == H3SpanStyle || spanStyle == H4SpanStyle || spanStyle == H5SpanStyle || spanStyle == H6SpanStyle
+
         if (spanStyle.color.isSpecified)
             cssStyleMap["color"] = decodeColorToCss(spanStyle.color)
 
-        if (spanStyle.fontSize.isSpecified) {
-            if (spanStyle.fontSize == SmallFontSize)
-                htmlTags.add("small")
-            else
-                decodeTextUnitToCss(spanStyle.fontSize)?.let { fontSize ->
-                    cssStyleMap["font-size"] = fontSize
-                }
+        if (!isHeading && spanStyle.fontSize.isSpecified) {
+            decodeTextUnitToCss(spanStyle.fontSize)?.let { fontSize ->
+                cssStyleMap["font-size"] = fontSize
+            }
         }
 
         spanStyle.fontWeight?.let { fontWeight ->
@@ -126,7 +130,9 @@ internal object CssDecoder {
         }
 
         decodeTextDirectionToCss(paragraphStyle.textDirection)?.let { textDirection ->
-            cssStyleMap["direction"] = textDirection
+            if (textDirection != "ltr") {
+                cssStyleMap["direction"] = textDirection
+            }
         }
 
         decodeTextUnitToCss(paragraphStyle.lineHeight)?.let { lineHeight ->
