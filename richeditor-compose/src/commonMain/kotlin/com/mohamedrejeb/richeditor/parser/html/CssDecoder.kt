@@ -44,7 +44,7 @@ internal object CssDecoder {
      * @param spanStyle the span style to decode.
      * @return the decoded CSS style map.
      */
-    internal fun decodeSpanStyleToHtmlStylingFormat(spanStyle: SpanStyle): HtmlStylingFormat {
+    internal fun decodeSpanStyleToHtmlStylingFormat(spanStyle: SpanStyle, parentTagName: String? = null): HtmlStylingFormat {
         val cssStyleMap = mutableMapOf<String, String>()
         val htmlTags = mutableListOf<String>()
 
@@ -60,9 +60,10 @@ internal object CssDecoder {
         }
 
         spanStyle.fontWeight?.let { fontWeight ->
-            if (fontWeight == FontWeight.Bold)
-                htmlTags.add("b")
-            else
+            val isHeading = parentTagName?.startsWith("h") == true
+            if (fontWeight == FontWeight.Bold) {
+                if (!isHeading) htmlTags.add("b")
+            } else
                 cssStyleMap["font-weight"] = decodeFontWeightToCss(fontWeight)
         }
 

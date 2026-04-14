@@ -427,7 +427,7 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
 
                 // Append paragraph children
                 richParagraph.children.fastForEach { richSpan ->
-                    builder.append(decodeRichSpanToHtml(richSpan))
+                    builder.append(decodeRichSpanToHtml(richSpan, paragraphTagName = paragraphTagName))
                 }
 
                 // Append paragraph closing tag
@@ -451,7 +451,10 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
     }
 
     @OptIn(ExperimentalRichTextApi::class)
-    private fun decodeRichSpanToHtml(richSpan: RichSpan, parentFormattingTags: List<String> = emptyList()): String {
+    private fun decodeRichSpanToHtml(
+        richSpan: RichSpan, parentFormattingTags: List<String> = emptyList(),
+        paragraphTagName: String? = null,
+    ): String {
         val stringBuilder = StringBuilder()
 
         // Check if span is empty
@@ -469,7 +472,10 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
         }
 
         // Convert span style to CSS string
-        val htmlStyleFormat = CssDecoder.decodeSpanStyleToHtmlStylingFormat(richSpan.spanStyle)
+        val htmlStyleFormat = CssDecoder.decodeSpanStyleToHtmlStylingFormat(
+            richSpan.spanStyle,
+            parentTagName = paragraphTagName
+        )
         val spanCss = CssDecoder.decodeCssStyleMap(htmlStyleFormat.cssStyleMap)
         val htmlTags = htmlStyleFormat.htmlTags.filter { it !in parentFormattingTags }
             .filter { it !in listOf("h1", "h2", "h3", "h4", "h5", "h6") }
@@ -496,6 +502,7 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
                 decodeRichSpanToHtml(
                     richSpan = child,
                     parentFormattingTags = parentFormattingTags + htmlTags,
+                    paragraphTagName = paragraphTagName,
                 )
             )
         }
