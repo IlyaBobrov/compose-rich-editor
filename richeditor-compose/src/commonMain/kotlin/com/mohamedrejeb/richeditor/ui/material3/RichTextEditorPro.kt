@@ -63,7 +63,7 @@ public fun RichTextEditorPro(
                 //.fillMaxSize()
                 .padding(scaffoldPadding)
                 .then(modifier)
-                .padding(16.dp)
+                //.padding(16.dp)
                 .onSizeChanged { s -> onSizeChanged(s) },
             contentPadding = contentPadding,
             onTextLayout = {
