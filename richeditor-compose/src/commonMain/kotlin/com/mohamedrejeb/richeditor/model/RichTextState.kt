@@ -94,13 +94,13 @@ public class RichTextState internal constructor(
     internal val usedInlineContentMapKeys = mutableSetOf<String>()
 
     /**
-     * The annotated string representing the rich text.
+     * Аннотированная строка, представляющая форматированный текст.
      */
     public var annotatedString: AnnotatedString by mutableStateOf(AnnotatedString(text = ""))
         private set
 
     /**
-     * The selection of the rich text.
+     * Выделение (selection) в форматированном тексте.
      */
     public var selection: TextRange
         get() = textFieldValue.selection
@@ -131,12 +131,12 @@ public class RichTextState internal constructor(
     )
 
     /**
-     * Returns whether the current selected text is a link.
+     * Возвращает, является ли текущий выделенный текст ссылкой.
      */
     public val isLink: Boolean get() = currentAppliedRichSpanStyle::class == RichSpanStyle.Link::class
 
     /**
-     * Returns the selected link text.
+     * Возвращает текст выбранной ссылки.
      */
     public val selectedLinkText: String?
         get() =
@@ -146,7 +146,7 @@ public class RichTextState internal constructor(
                 null
 
     /**
-     * Returns the selected link URL.
+     * Возвращает URL выбранной ссылки.
      */
     public val selectedLinkUrl: String? get() = (currentAppliedRichSpanStyle as? RichSpanStyle.Link)?.url
 
@@ -158,7 +158,7 @@ public class RichTextState internal constructor(
     public val isCode: Boolean get() = isCodeSpan
 
     /**
-     * Returns whether the current selected text is a code span.
+     * Возвращает, является ли текущий выделенный текст кодом (code span).
      */
     public val isCodeSpan: Boolean get() = currentRichSpanStyle::class == RichSpanStyle.Code::class
 
@@ -186,17 +186,17 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * The current span style.
-     * If the selection is collapsed, the span style is the style of the character preceding the selection.
-     * If the selection is not collapsed, the span style is the style of the selection.
+     * Текущий строчный стиль.
+     * Если выделение свёрнуто (collapsed), строчный стиль — это стиль символа, предшествующего выделению.
+     * Если выделение не свёрнуто, строчный стиль — это стиль выделенного фрагмента.
      */
     public val currentSpanStyle: SpanStyle
         get() = currentAppliedSpanStyle.customMerge(toAddSpanStyle).unmerge(toRemoveSpanStyle)
 
     /**
-     * The current rich span style.
-     * If the selection is collapsed, the rich span style is the style of the character preceding the selection.
-     * If the selection is not collapsed, the rich span style is the style of the selection.
+     * Текущий богатый строчный стиль.
+     * Если выделение свёрнуто (collapsed), богатый строчный стиль — это стиль символа, предшествующего выделению.
+     * Если выделение не свёрнуто, богатый строчный стиль — это стиль выделенного фрагмента.
      */
     public val currentRichSpanStyle: RichSpanStyle
         get() = when {
@@ -223,9 +223,9 @@ public class RichTextState internal constructor(
     private var toRemoveParagraphStyle: ParagraphStyle by mutableStateOf(ParagraphStyle())
 
     /**
-     * The current paragraph style.
-     * If the selection is collapsed, the paragraph style is the style of the paragraph containing the selection.
-     * If the selection is not collapsed, the paragraph style is the style of the selection.
+     * Текущий стиль абзаца.
+     * Если выделение свёрнуто (collapsed), стиль абзаца — это стиль абзаца, содержащего выделение.
+     * Если выделение не свёрнуто, стиль абзаца — это стиль выделенного фрагмента.
      */
     public val currentParagraphStyle: ParagraphStyle
         get() = currentAppliedParagraphStyle
@@ -303,19 +303,19 @@ public class RichTextState internal constructor(
     // Text
 
     /**
-     * Removes the selected text from the current text input.
+     * Удаляет выделенный текст из текущего текстового поля.
      *
-     * This method removes the text specified by the `selection` from the current text input.
+     * Этот метод удаляет текст, указанный параметром `selection`, из текущего текстового поля.
      *
      * @see removeTextRange
      */
     public fun removeSelectedText(): Unit =
         removeTextRange(selection)
 
-    /**x
-     * Removes the specified text range from the current text.
+    /**
+     * Удаляет указанный диапазон текста из текущего текста.
      *
-     * @param textRange the range of text to be removed
+     * @param textRange Диапазон текста, подлежащий удалению.
      */
     public fun removeTextRange(
         textRange: TextRange
@@ -342,18 +342,18 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Replaces the currently selected text with the provided text.
+     * Заменяет текущий выделенный текст на предоставленный текст.
      *
-     * @param text The new text to be inserted
+     * @param text Новый текст для вставки.
      */
     public fun replaceSelectedText(text: String): Unit =
         replaceTextRange(selection, text)
 
     /**
-     * Replaces the text in the specified range with the provided text.
+     * Заменяет текст в указанном диапазоне на предоставленный текст.
      *
-     * @param textRange The range of text to be replaced
-     * @param text The new text to be inserted
+     * @param textRange Диапазон текста, подлежащий замене.
+     * @param text Новый текст для вставки.
      */
     public fun replaceTextRange(
         textRange: TextRange,
@@ -374,9 +374,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Adds the provided text to the text field at the current selection.
+     * Добавляет указанный текст в текстовое поле в позиции текущего выделения.
      *
-     * @param text The text to be added
+     * @param text Текст, который нужно добавить.
      */
     public fun addTextAfterSelection(text: String): Unit =
         addTextAtIndex(
@@ -385,10 +385,10 @@ public class RichTextState internal constructor(
         )
 
     /**
-     * Adds the provided text to the text field at the specified index.
+     * Добавляет указанный текст в текстовое поле по указанному индексу.
      *
-     * @param index The index at which the text should be added
-     * @param text The text to be added
+     * @param index Индекс, по которому следует добавить текст.
+     * @param text Текст, который нужно добавить.
      */
     public fun addTextAtIndex(
         index: Int,
@@ -419,11 +419,11 @@ public class RichTextState internal constructor(
     // SpanStyle
 
     /**
-     * Returns the [SpanStyle] of the text at the specified text range.
-     * If the text range is collapsed, the style of the character preceding the text range is returned.
+     * Возвращает [SpanStyle] текста в указанном диапазоне.
+     * Если диапазон текста свёрнут (collapsed), возвращается стиль символа, предшествующего этому диапазону.
      *
-     * @param textRange the text range.
-     * @return the [SpanStyle] of the text at the specified text range.
+     * @param textRange Диапазон текста.
+     * @return [SpanStyle] текста в указанном диапазоне.
      */
     public fun getSpanStyle(textRange: TextRange): SpanStyle =
         if (textRange.collapsed) {
@@ -441,11 +441,11 @@ public class RichTextState internal constructor(
         }
 
     /**
-     * Returns the [RichSpanStyle] of the text at the specified text range.
-     * If the text range is collapsed, the style of the character preceding the text range is returned.
+     * Возвращает [RichSpanStyle] текста в указанном диапазоне.
+     * Если диапазон текста свёрнут (collapsed), возвращается стиль символа, предшествующего этому диапазону.
      *
-     * @param textRange the text range.
-     * @return the [RichSpanStyle] of the text at the specified text range.
+     * @param textRange Диапазон текста.
+     * @return [RichSpanStyle] текста в указанном диапазоне.
      */
     public fun getRichSpanStyle(textRange: TextRange): RichSpanStyle =
         if (textRange.collapsed) {
@@ -463,11 +463,11 @@ public class RichTextState internal constructor(
         }
 
     /**
-     * Returns the [ParagraphStyle] of the text at the specified text range.
-     * If the text range is collapsed, the style of the paragraph containing the text range is returned.
+     * Возвращает [ParagraphStyle] текста в указанном диапазоне.
+     * Если диапазон текста свёрнут (collapsed), возвращается стиль абзаца, содержащего этот диапазон.
      *
-     * @param textRange the text range.
-     * @return the [ParagraphStyle] of the text at the specified text range.
+     * @param textRange Диапазон текста.
+     * @return [ParagraphStyle] текста в указанном диапазоне.
      */
     public fun getParagraphStyle(textRange: TextRange): ParagraphStyle =
         if (textRange.collapsed) {
@@ -485,18 +485,18 @@ public class RichTextState internal constructor(
         }
 
     /**
-     * Toggle the [SpanStyle]
-     * If the passed span style doesn't exist in the [currentSpanStyle] it's going to be added.
-     * If the passed span style already exists in the [currentSpanStyle] it's going to be removed.
+     * Переключает [SpanStyle]
+     * Если переданный строчный стиль отсутствует в [currentSpanStyle], он будет добавлен.
+     * Если переданный строчный стиль уже присутствует в [currentSpanStyle], он будет удалён.
      *
-     * Example: You can toggle Bold FontWeight by passing:
+     * Пример: Вы можете переключить жирное начертание (FontWeight.Bold), передав:
      *
      * ```
      * SpanStyle(fontWeight = FontWeight.Bold)
      * ```
      *
-     * @param spanStyle the span style that is going to be toggled.
-     * Only the specified params are going to be toggled, and the non specified ones are going to be ignored.
+     * @param spanStyle Строчный стиль, который будет переключён.
+     * Будут переключены только указанные параметры, а неуказанные будут проигнорированы.
      * @see [addSpanStyle]
      * @see [removeSpanStyle]
      */
@@ -508,16 +508,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Add new [SpanStyle] to the [currentSpanStyle]
+     * Добавляет новый [SpanStyle] в [currentSpanStyle]
      *
-     * Example: You can add Bold FontWeight by passing:
+     * Пример: Вы можете добавить жирное начертание (FontWeight.Bold), передав:
      *
      * ```
      * SpanStyle(fontWeight = FontWeight.Bold)
      * ```
      *
-     * @param spanStyle the span style that is going to be added to the [currentSpanStyle].
-     * Only the specified params are going to be applied, and the non specified ones are going to be ignored.
+     * @param spanStyle Строчный стиль, который будет добавлен в [currentSpanStyle].
+     * Будут применены только указанные параметры, а неуказанные будут проигнорированы.
      * @see [removeSpanStyle]
      * @see [toggleSpanStyle]
      */
@@ -532,16 +532,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Add new [SpanStyle] for a specific [TextRange]
+     * Добавляет новый [SpanStyle] для указанного [TextRange]
      *
-     * Example: You can add Bold FontWeight to a specific range by passing:
+     * Пример: Вы можете добавить жирное начертание (FontWeight.Bold) в указанный диапазон, передав:
      *
      * ```
      * state.addSpanStyle(SpanStyle(fontWeight = FontWeight.Bold), TextRange(0, 5))
      * ```
      *
-     * @param spanStyle the span style that is going to be added to the rich span.
-     * @param textRange the text range where the span style is going to be applied.
+     * @param spanStyle Строчный стиль, который будет добавлен в богатый спан.
+     * @param textRange Диапазон текста, к которому будет применён строчный стиль.
      */
     public fun addSpanStyle(spanStyle: SpanStyle, textRange: TextRange) {
         val oldToRemoveSpanStyle = toRemoveSpanStyle
@@ -557,16 +557,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Remove an existing [SpanStyle] from the [currentSpanStyle]
+     * Удаляет существующий [SpanStyle] из [currentSpanStyle]
      *
-     * Example: You can remove Bold FontWeight by passing:
+     * Пример: Вы можете удалить жирное начертание (FontWeight.Bold), передав:
      *
      * ```
      * SpanStyle(fontWeight = FontWeight.Bold)
      * ```
      *
-     * @param spanStyle the span style that is going to be removed from the [currentSpanStyle].
-     * Only the specified params are going to be removed, and the non specified ones are going to be ignored.
+     * @param spanStyle Строчный стиль, который будет удалён из [currentSpanStyle].
+     * Будут удалены только указанные параметры, а неуказанные будут проигнорированы.
      * @see [addSpanStyle]
      * @see [toggleSpanStyle]
      */
@@ -581,16 +581,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Remove an existing [SpanStyle] from a specific [TextRange]
+     * Удаляет существующий [SpanStyle] из указанного [TextRange]
      *
-     * Example: You can remove Bold FontWeight from a specific range by passing:
+     * Пример: Вы можете удалить жирное начертание (FontWeight.Bold) из указанного диапазона, передав:
      *
      * ```
      * state.removeSpanStyle(SpanStyle(fontWeight = FontWeight.Bold), TextRange(0, 5))
      * ```
      *
-     * @param spanStyle the span style that is going to be removed from the rich span.
-     * @param textRange the text range where the span style is going to be removed.
+     * @param spanStyle Строчный стиль, который будет удалён из богатого спана.
+     * @param textRange Диапазон текста, из которого будет удалён строчный стиль.
      */
     public fun removeSpanStyle(spanStyle: SpanStyle, textRange: TextRange) {
         val oldToRemoveSpanStyle = toRemoveSpanStyle
@@ -622,11 +622,11 @@ public class RichTextState internal constructor(
     // RichSpanStyle
 
     /**
-     * Add a link to the text field.
-     * The link is going to be added after the current selection.
+     * Добавляет ссылку в текстовое поле.
+     * Ссылка будет добавлена после текущего выделения.
      *
-     * @param text the text of the link.
-     * @param url the URL of the link.
+     * @param text Текст ссылки.
+     * @param url URL ссылки.
      */
     public fun addLink(
         text: String,
@@ -661,9 +661,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Add a link to the selected text.
+     * Добавляет ссылку в выделенный текст.
      *
-     * @param url the URL of the link.
+     * @param url URL ссылки.
      */
     public fun addLinkToSelection(
         url: String,
@@ -683,10 +683,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Add a link to a specific [TextRange].
+     * Добавляет ссылку в указанный [TextRange].
      *
-     * @param url the URL of the link.
-     * @param textRange the text range where the link is going to be added.
+     * @param url URL ссылки.
+     * @param textRange Диапазон текста, в который будет добавлена ссылка.
      */
     public fun addLinkToTextRange(
         url: String,
@@ -708,9 +708,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Update the link of the selected text.
+     * Обновляет ссылку выделенного текста.
      *
-     * @param url the new URL of the link.
+     * @param url Новый URL ссылки.
      */
     public fun updateLink(
         url: String,
@@ -729,7 +729,7 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Remove the link from the selected text.
+     * Удаляет ссылку из выделенного текста.
      */
     public fun removeLink() {
         if (!isLink) return
@@ -776,10 +776,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Add a new [RichSpanStyle] to the selected text or to the text
-     * that is going to be typed if the selection is collapsed.
+     * Добавляет новый [RichSpanStyle] в выделенный текст или в текст,
+     * который будет набран, если выделение свёрнуто (collapsed).
      *
-     * @param spanStyle the rich span style that is going to be added.
+     * @param spanStyle Богатый строчный стиль, который будет добавлен.
      */
     public fun addRichSpan(spanStyle: RichSpanStyle) {
         if (toRemoveRichSpanStyleKClass == spanStyle::class)
@@ -791,10 +791,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Add a new [RichSpanStyle] to a specific [TextRange].
+     * Добавляет новый [RichSpanStyle] в указанный [TextRange].
      *
-     * @param spanStyle the rich span style that is going to be added.
-     * @param textRange the text range where the rich span style is going to be applied.
+     * @param spanStyle Богатый строчный стиль, который будет добавлен.
+     * @param textRange Диапазон текста, к которому будет применён богатый строчный стиль.
      */
     public fun addRichSpan(
         spanStyle: RichSpanStyle,
@@ -811,10 +811,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Remove an existing [RichSpanStyle] from the selected text or from the text
-     * that is going to be typed if the selection is collapsed.
+     * Удаляет существующий [RichSpanStyle] из выделенного текста или из текста,
+     * который будет набран, если выделение свёрнуто (collapsed).
      *
-     * @param spanStyle the rich span style that is going to be removed.
+     * @param spanStyle Богатый строчный стиль, который будет удалён.
      */
     public fun removeRichSpan(spanStyle: RichSpanStyle) {
         if (toAddRichSpanStyle::class == spanStyle::class)
@@ -826,10 +826,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Remove an existing [RichSpanStyle] from a specific [TextRange].
+     * Удаляет существующий [RichSpanStyle] из указанного [TextRange].
      *
-     * @param spanStyle the rich span style that is going to be removed.
-     * @param textRange the text range where the rich span style is going to be removed.
+     * @param spanStyle Богатый строчный стиль, который будет удалён.
+     * @param textRange Диапазон текста, из которого будет удалён богатый строчный стиль.
      */
     public fun removeRichSpan(
         spanStyle: RichSpanStyle,
@@ -853,25 +853,25 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Clear all [RichSpanStyle]s from a specific [TextRange].
+     * Очищает все [RichSpanStyle] в указанном [TextRange].
      */
     public fun clearRichSpans(textRange: TextRange) {
         removeRichSpan(currentRichSpanStyle, textRange)
     }
 
     /**
-     * Toggle the [ParagraphStyle]
-     * If the passed paragraph style doesn't exist in the [currentParagraphStyle] it's going to be added.
-     * If the passed paragraph style already exists in the [currentParagraphStyle] it's going to be removed.
+     * Переключает [ParagraphStyle]
+     * Если переданный стиль абзаца отсутствует в [currentParagraphStyle], он будет добавлен.
+     * Если переданный стиль абзаца уже присутствует в [currentParagraphStyle], он будет удалён.
      *
-     * Example: You can toggle TextAlign Center by passing:
+     * Пример: Вы можете переключить выравнивание по центру, передав:
      *
      * ```
      * ParagraphStyle(textAlign = TextAlign.Center)
      * ```
      *
-     * @param paragraphStyle the paragraph style that is going to be toggled.
-     * Only the specified params are going to be toggled, and the non specified ones are going to be ignored.
+     * @param paragraphStyle Стиль абзаца, который будет переключён.
+     * Будут переключены только указанные параметры, а неуказанные будут проигнорированы.
      * @see [addParagraphStyle]
      * @see [removeParagraphStyle]
      */
@@ -883,16 +883,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Add new [ParagraphStyle] to the [currentParagraphStyle]
+     * Добавляет новый [ParagraphStyle] в [currentParagraphStyle]
      *
-     * Example: You can add TextAlign Center by passing:
+     * Пример: Вы можете добавить выравнивание по центру, передав:
      *
      * ```
      * ParagraphStyle(textAlign = TextAlign.Center)
      * ```
      *
-     * @param paragraphStyle the paragraph style that is going to be added to the [currentParagraphStyle].
-     * Only the specified params are going to be applied, and the non specified ones are going to be ignored.
+     * @param paragraphStyle Стиль абзаца, который будет добавлен в [currentParagraphStyle].
+     * Будут применены только указанные параметры, а неуказанные будут проигнорированы.
      * @see [removeParagraphStyle]
      * @see [toggleParagraphStyle]
      */
@@ -919,16 +919,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Remove an existing [ParagraphStyle] from the [currentParagraphStyle]
+     * Удаляет существующий [ParagraphStyle] из [currentParagraphStyle]
      *
-     * Example: You can remove TextAlign Center by passing:
+     * Пример: Вы можете удалить выравнивание по центру, передав:
      *
      * ```
      * ParagraphStyle(textAlign = TextAlign.Center)
      * ```
      *
-     * @param paragraphStyle the paragraph style that is going to be removed from the [currentParagraphStyle].
-     * Only the specified params are going to be removed, and the non specified ones are going to be ignored.
+     * @param paragraphStyle Стиль абзаца, который будет удалён из [currentParagraphStyle].
+     * Будут удалены только указанные параметры, а неуказанные будут проигнорированы.
      * @see [addParagraphStyle]
      * @see [toggleParagraphStyle]
      */
@@ -984,14 +984,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Toggles the heading type of the current selection.
+     * Переключает тип заголовка для текущего выделения.
      *
-     * @param level the level of the heading.
-     */
-    /**
-     * Toggles the heading type of the current selection.
-     *
-     * @param level the level of the heading.
+     * @param level Уровень заголовка.
      */
     public fun toggleHeading(level: Int) {
         if (singleParagraphMode) return
@@ -1240,11 +1235,11 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Decrease the level of the current selected lists.
+     * Уменьшает уровень текущих выбранных списков.
      *
-     * If the current selection is not a list, this method does nothing.
+     * Если текущее выделение не является списком, этот метод ничего не делает.
      *
-     * If multiple paragraphs are selected, they all must be lists.
+     * Если выбрано несколько абзацев, все они должны быть списками.
      */
     public fun decreaseListLevel() {
         if (!isList)
@@ -1349,11 +1344,11 @@ public class RichTextState internal constructor(
      */
 
     /**
-     * Returns the [ParagraphType] of the text at the specified text range.
-     * If the text range is collapsed, the type of the paragraph containing the text range is returned.
+     * Возвращает [ParagraphType] текста в указанном диапазоне.
+     * Если диапазон текста свёрнут (collapsed), возвращается тип абзаца, содержащего этот диапазон.
      *
-     * @param textRange the text range.
-     * @return the [ParagraphType] of the text at the specified text range.
+     * @param textRange Диапазон текста.
+     * @return [ParagraphType] текста в указанном диапазоне.
      */
     internal fun getParagraphType(textRange: TextRange): ParagraphType =
         if (textRange.collapsed) {
@@ -1495,10 +1490,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Increases and decreases the list level of the current selected lists when the Tab key is pressed.
+     * Увеличивает или уменьшает уровень списка для текущих выбранных списков при нажатии клавиши Tab.
      *
-     * @param event the key event.
-     * @return true if the list level was increased or decreased, false otherwise.
+     * @param event Событие клавиши.
+     * @return true, если уровень списка был увеличен или уменьшен, false в противном случае.
      */
     internal fun onPreviewKeyEvent(event: KeyEvent): Boolean {
         if (event.type != KeyEventType.KeyDown)
@@ -1528,10 +1523,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Checks weather the list level can be increased or not.
+     * Проверяет, можно ли увеличить уровень списка или нет.
      *
-     * @param paragraphs the list of paragraphs to check.
-     * @return true if the list level can be increased, false otherwise.
+     * @param paragraphs Список абзацев для проверки.
+     * @return true, если уровень списка можно увеличить, false в противном случае.
      */
     internal fun canIncreaseListLevel(
         paragraphs: List<RichParagraph> = getRichParagraphListByTextRange(selection),
@@ -1574,10 +1569,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Checks weather the list level can be decreased or not.
+     * Проверяет, можно ли уменьшить уровень списка или нет.
      *
-     * @param paragraphs the list of paragraphs to check.
-     * @return true if the list level can be decreased, false otherwise.
+     * @param paragraphs Список абзацев для проверки.
+     * @return true, если уровень списка можно уменьшить, false в противном случае.
      */
     internal fun canDecreaseListLevel(
         paragraphs: List<RichParagraph> = getRichParagraphListByTextRange(selection),
@@ -1665,14 +1660,14 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Temporarily stores the new text field value, before it is validated.
+     * Временно сохраняет новое значение текстового поля до его проверки.
      */
     private var tempTextFieldValue = textFieldValue
 
     /**
-     * Handles the new text field value.
+     * Обрабатывает новое значение текстового поля.
      *
-     * @param newTextFieldValue the new text field value.
+     * @param newTextFieldValue Новое значение текстового поля.
      */
     public fun onTextFieldValueChange(newTextFieldValue: TextFieldValue) {
         tempTextFieldValue = newTextFieldValue
@@ -1737,11 +1732,11 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Update the [annotatedString] to reflect the new changes on the [richParagraphList].
-     * This method will update the [annotatedString] and the [textFieldValue] to reflect the new changes.
-     * If no [newTextFieldValue] is passed, the [textFieldValue] will be used instead.
+     * Обновляет [annotatedString] в соответствии с изменениями в [richParagraphList].
+     * Этот метод обновит [annotatedString] и [textFieldValue] в соответствии с изменениями.
+     * Если [newTextFieldValue] не передан, вместо него будет использоваться [textFieldValue].
      *
-     * @param newTextFieldValue the new text field value.
+     * @param newTextFieldValue Новое значение текстового поля.
      * @see [textFieldValue]
      * @see [annotatedString]
      */
@@ -1815,9 +1810,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Handles adding characters to the text field.
-     * This method will update the [richParagraphList] to reflect the new changes.
-     * This method will use the [tempTextFieldValue] to get the new characters.
+     * Обрабатывает добавление символов в текстовое поле.
+     * Этот метод обновит [richParagraphList] в соответствии с изменениями.
+     * Этот метод использует [tempTextFieldValue] для получения новых символов.
      */
     private fun handleAddingCharacters() {
         val typedCharsCount = tempTextFieldValue.text.length - textFieldValue.text.length
@@ -1955,9 +1950,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Handles removing characters from the text field value.
-     * This method will update the [richParagraphList] to reflect the new changes.
-     * This method will use the [tempTextFieldValue] to get the removed characters.
+     * Обрабатывает удаление символов из значения текстового поля.
+     * Этот метод обновит [richParagraphList] в соответствии с изменениями.
+     * Этот метод использует [tempTextFieldValue] для получения удалённых символов.
      */
     private fun handleRemovingCharacters() {
         val removedCharsCount = textFieldValue.text.length - tempTextFieldValue.text.length
@@ -2262,12 +2257,12 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Checks the ordered lists numbers and adjusts them if needed.
+     * Проверяет нумерацию упорядоченных списков и корректирует её при необходимости.
      *
-     * @param startParagraphIndex the start paragraph index to start checking from.
-     * @param startNumber the start number to start from.
-     * @param textFieldValue the text field value to update.
-     * @return the updated text field value.
+     * @param startParagraphIndex Начальный индекс абзаца, с которого начинается проверка.
+     * @param startNumber Начальное число, с которого начинать.
+     * @param textFieldValue Значение текстового поля для обновления.
+     * @return Обновлённое значение текстового поля.
      */
     private fun adjustOrderedListsNumbers(
         startParagraphIndex: Int,
@@ -2500,16 +2495,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Handles adding or removing the style in [toAddSpanStyle] and [toRemoveSpanStyle] from the selected text.
+     * Обрабатывает добавление или удаление стилей [toAddSpanStyle] и [toRemoveSpanStyle] из выделенного текста.
      */
     private fun applyRichSpanStyleToSelectedText() {
         applyRichSpanStyleToTextRange(selection)
     }
 
     /**
-     * Handles adding or removing the style in [toAddSpanStyle] and [toRemoveSpanStyle] from a given [TextRange].
+     * Обрабатывает добавление или удаление стилей [toAddSpanStyle] и [toRemoveSpanStyle] из указанного [TextRange].
      *
-     * @param textRange The [TextRange] to apply the styles to.
+     * @param textRange [TextRange], к которому применяются стили.
      */
     private fun applyRichSpanStyleToTextRange(
         textRange: TextRange
@@ -2563,15 +2558,15 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Apply [toAddSpanStyle] and [toRemoveSpanStyle] to a [RichSpan].
+     * Применяет [toAddSpanStyle] и [toRemoveSpanStyle] к [RichSpan].
      *
-     * @param richSpan The [RichSpan] to apply the styles to.
-     * @param beforeText The text before applying the styles.
-     * @param middleText The text to apply the styles to.
-     * @param afterText The text after applying the styles.
-     * @param startIndex The start index of the text to apply the styles to.
-     * @param richSpanFullSpanStyle The [SpanStyle] of the [RichSpan].
-     * @param newSpanStyle The new [SpanStyle] to apply to the [RichSpan].
+     * @param richSpan [RichSpan], к которому применяются стили.
+     * @param beforeText Текст до применения стилей.
+     * @param middleText Текст, к которому применяются стили.
+     * @param afterText Текст после применения стилей.
+     * @param startIndex Начальный индекс текста, к которому применяются стили.
+     * @param richSpanFullSpanStyle [SpanStyle] объекта [RichSpan].
+     * @param newSpanStyle Новый [SpanStyle], применяемый к [RichSpan].
      */
     private fun handleUpdatingRichSpan(
         richSpan: RichSpan,
@@ -2624,13 +2619,13 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Handles applying a new [SpanStyle] and a new [RichSpanStyle] to a [RichSpan].
+     * Обрабатывает применение нового [SpanStyle] и нового [RichSpanStyle] к [RichSpan].
      *
-     * @param richSpan The [RichSpan] to apply the new [SpanStyle] to.
-     * @param beforeText The text before applying the styles.
-     * @param middleText The text to apply the styles to.
-     * @param afterText The text after applying the styles.
-     * @param startIndex The start index of the text to apply the styles to.
+     * @param richSpan [RichSpan], к которому применяется новый [SpanStyle].
+     * @param beforeText Текст до применения стилей.
+     * @param middleText Текст, к которому применяются стили.
+     * @param afterText Текст после применения стилей.
+     * @param startIndex Начальный индекс текста, к которому применяются стили.
      */
     private fun applyStyleToRichSpan(
         richSpan: RichSpan,
@@ -2799,16 +2794,16 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Handles removing a [SpanStyle] from a [RichSpan].
+     * Обрабатывает удаление [SpanStyle] из [RichSpan].
      *
-     * @param richSpan The [RichSpan] to remove the [SpanStyle] from.
-     * @param beforeText The text before removing the styles.
-     * @param middleText The text to remove the styles from.
-     * @param afterText The text after removing the styles.
-     * @param startIndex The start index of the text to remove the styles from.
-     * @param richSpanFullSpanStyle The [SpanStyle] of the [RichSpan].
-     * @param newSpanStyle The new [SpanStyle] to apply to the [RichSpan].
-     * @param newRichSpanStyle The new [RichSpanStyle] to apply to the [RichSpan].
+     * @param richSpan [RichSpan], из которого нужно удалить [SpanStyle].
+     * @param beforeText Текст до удаления стилей.
+     * @param middleText Текст, из которого удаляются стили.
+     * @param afterText Текст после удаления стилей.
+     * @param startIndex Начальный индекс текста, из которого удаляются стили.
+     * @param richSpanFullSpanStyle [SpanStyle] объекта [RichSpan].
+     * @param newSpanStyle Новый [SpanStyle], применяемый к [RichSpan].
+     * @param newRichSpanStyle Новый [RichSpanStyle], применяемый к [RichSpan].
      */
     private fun handleRemovingStyleFromRichSpan(
         richSpan: RichSpan,
@@ -3064,13 +3059,13 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Slice [RichParagraph] by [startIndex] and [richSpan] that contains [startIndex].
-     * The passed [RichParagraph] will be modified, containing only the text before [startIndex].
-     * And the new [RichParagraph] will be returned, containing the text after [startIndex].
+     * Разделяет [RichParagraph] по [startIndex] и [richSpan], который содержит [startIndex].
+     * Переданный [RichParagraph] будет изменён и будет содержать только текст до [startIndex].
+     * А новый [RichParagraph] будет возвращён, содержащий текст после [startIndex].
      *
-     * @param startIndex The start index of the slice.
-     * @param richSpan The [RichSpan] that contains [startIndex].
-     * @return The new [RichParagraph].
+     * @param startIndex Начальный индекс для разделения.
+     * @param richSpan [RichSpan], который содержит [startIndex].
+     * @return Новый [RichParagraph].
      */
     private fun RichParagraph.slice(
         startIndex: Int,
@@ -3175,13 +3170,13 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Slice [RichSpan] by [startIndex] and [richSpan] that contains [startIndex].
-     * The passed [RichSpan] will be modified, containing only the text before [startIndex].
-     * And the new [RichSpan] will be returned, containing the text after [startIndex].
+     * Разделяет [RichSpan] по [startIndex] и [richSpan], который содержит [startIndex].
+     * Переданный [RichSpan] будет изменён и будет содержать только текст до [startIndex].
+     * А новый [RichSpan] будет возвращён, содержащий текст после [startIndex].
      *
-     * @param startIndex The start index of the slice.
-     * @param richSpan The [RichSpan] that contains [startIndex].
-     * @return The new [RichSpan].
+     * @param startIndex Начальный индекс для разделения.
+     * @param richSpan [RichSpan], который содержит [startIndex].
+     * @return Новый [RichSpan].
      */
     private fun RichSpan.slice(
         startIndex: Int,
@@ -3256,12 +3251,12 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Merges two [RichParagraph]s into one.
-     * The [firstParagraph] will be modified, containing the text of both [firstParagraph] and [secondParagraph].
-     * And the [secondParagraph] will be removed.
+     * Объединяет два [RichParagraph] в один.
+     * [firstParagraph] будет изменён и будет содержать текст как [firstParagraph], так и [secondParagraph].
+     * А [secondParagraph] будет удалён.
      *
-     * @param firstParagraph The first [RichParagraph].
-     * @param secondParagraph The second [RichParagraph].
+     * @param firstParagraph Первый [RichParagraph].
+     * @param secondParagraph Второй [RichParagraph].
      */
     private fun mergeTwoRichParagraphs(
         firstParagraph: RichParagraph,
@@ -3278,7 +3273,7 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Updates the [currentAppliedSpanStyle] to the [SpanStyle] that should be applied to the current selection.
+     * Обновляет [currentAppliedSpanStyle] до значения [SpanStyle], которое должно быть применено к текущему выделению.
      */
     private fun updateCurrentSpanStyle() {
         if (selection.collapsed) {
@@ -3319,10 +3314,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Gets the common [RichSpanStyle] of the [RichSpan]s in the [textRange].
+     * Возвращает общий [RichSpanStyle] для [RichSpan] в указанном [textRange].
      *
-     * @param textRange The [TextRange] to get the common [RichSpanStyle] from.
-     * @return The common [RichSpanStyle] of the [RichSpan]s in the [textRange].
+     * @param textRange [TextRange], для которого нужно получить общий [RichSpanStyle].
+     * @return Общий [RichSpanStyle] для [RichSpan] в указанном [textRange].
      */
     private fun getCommonRichSpanStyleByTextRange(
         textRange: TextRange,
@@ -3333,10 +3328,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Gets the common [SpanStyle] of the [RichSpan]s in the [textRange].
+     * Возвращает общий [SpanStyle] для [RichSpan] в указанном [textRange].
      *
-     * @param textRange The [TextRange] to get the common [SpanStyle] from.
-     * @return The common [SpanStyle] of the [RichSpan]s in the [textRange].
+     * @param textRange [TextRange], для которого нужно получить общий [SpanStyle].
+     * @return Общий [SpanStyle] для [RichSpan] в указанном [textRange].
      */
     private fun getCommonSpanStyleByTextRange(
         textRange: TextRange,
@@ -3347,7 +3342,7 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Updates the [currentAppliedParagraphStyle] to the [ParagraphStyle] that should be applied to the current selection.
+     * Обновляет [currentAppliedParagraphStyle] до значения [ParagraphStyle], которое должно быть применено к текущему выделению.
      */
     private fun updateCurrentParagraphStyle() {
         if (selection.collapsed) {
@@ -3480,10 +3475,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Adjusts the [selection] to the [pressPosition].
-     * This is a workaround for the [TextField] that the [selection] is not always correct when you have multiple lines.
+     * Корректирует [selection] в соответствии с [pressPosition].
+     * Это обходное решение для [TextField], когда [selection] не всегда корректен при наличии нескольких строк.
      *
-     * @param pressPosition The press position.
+     * @param pressPosition Позиция нажатия.
      */
     internal suspend fun adjustSelectionAndRegisterPressPosition(
         pressPosition: Offset,
@@ -3493,11 +3488,11 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Adjusts the [selection] to the [pressPosition].
-     * This is a workaround for the [TextField] that the [selection] is not always correct when you have multiple lines.
+     * Корректирует [selection] в соответствии с [pressPosition].
+     * Это обходное решение для [TextField], когда [selection] не всегда корректен при наличии нескольких строк.
      *
-     * @param pressPosition The press position.
-     * @param newSelection The new selection.
+     * @param pressPosition Позиция нажатия.
+     * @param newSelection Новое выделение.
      */
     private fun adjustSelection(
         pressPosition: Offset,
@@ -3626,11 +3621,11 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Returns the [RichParagraph] that contains the given [textIndex].
-     * If no [RichParagraph] contains the given [textIndex], null is returned.
+     * Возвращает [RichParagraph], который содержит указанный [textIndex].
+     * Если ни один [RichParagraph] не содержит указанный [textIndex], возвращается null.
      *
-     * @param textIndex The text index to search for.
-     * @return The [RichParagraph] that contains the given [textIndex], or null if no such [RichParagraph] exists.
+     * @param textIndex Индекс текста для поиска.
+     * @return [RichParagraph], содержащий указанный [textIndex], или null, если такого [RichParagraph] не существует.
      */
     private fun getRichParagraphByTextIndex(
         textIndex: Int,
@@ -3653,12 +3648,12 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Returns a list of [RichParagraph]s that contains at least a part of the given [searchTextRange].
-     * If no [RichParagraph] contains at least a part of the given [searchTextRange], an empty list is returned.
+     * Возвращает список [RichParagraph], которые содержат хотя бы часть указанного [searchTextRange].
+     * Если ни один [RichParagraph] не содержит хотя бы часть указанного [searchTextRange], возвращается пустой список.
      *
-     * @param searchTextRange The [TextRange] to search for.
-     * @return A list of [RichParagraph]s that contains a part of the given [searchTextRange],
-     * or an empty list if no such [RichParagraph] exists.
+     * @param searchTextRange Искомый диапазон [TextRange].
+     * @return Список [RichParagraph], содержащих часть указанного [searchTextRange],
+     * или пустой список, если таких [RichParagraph] не существует.
      */
     internal fun getRichParagraphListByTextRange(searchTextRange: TextRange): List<RichParagraph> {
         if (singleParagraphMode)
@@ -3719,11 +3714,11 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Returns the [RichSpan] that contains the given [textIndex].
-     * If no [RichSpan] contains the given [textIndex], null is returned.
+     * Возвращает [RichSpan], который содержит указанный [textIndex].
+     * Если ни один [RichSpan] не содержит указанный [textIndex], возвращается null.
      *
-     * @param textIndex The text index to search for.
-     * @return The [RichSpan] that contains the given [textIndex], or null if no such [RichSpan] exists.
+     * @param textIndex Индекс текста для поиска.
+     * @return [RichSpan], содержащий указанный [textIndex], или null, если такого [RichSpan] не существует.
      */
     internal fun getRichSpanByTextIndex(
         textIndex: Int,
@@ -3752,11 +3747,11 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Returns a list of [RichSpan]s that contains at least a part of the given [searchTextRange].
-     * If no [RichSpan] contains at least a part of the given [searchTextRange], an empty list is returned.
+     * Возвращает список [RichSpan], которые содержат хотя бы часть указанного [searchTextRange].
+     * Если ни один [RichSpan] не содержит хотя бы часть указанного [searchTextRange], возвращается пустой список.
      *
-     * @param searchTextRange The [TextRange] to search for.
-     * @return A list of [RichSpan]s that contains a part of the given [searchTextRange], or an empty list if no such [RichSpan] exists.
+     * @param searchTextRange Искомый диапазон [TextRange].
+     * @return Список [RichSpan], содержащих часть указанного [searchTextRange], или пустой список, если таких [RichSpan] не существует.
      */
     private fun getRichSpanListByTextRange(searchTextRange: TextRange): List<RichSpan> {
         var index = 0
@@ -3774,7 +3769,7 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Internal helper for testing
+     * Вспомогательный внутренний метод для тестирования
      */
     internal fun printParagraphs() {
         richParagraphList.fastForEachIndexed { i, richParagraph ->
@@ -3783,10 +3778,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Returns a copy of this [RichTextState].
-     * It can be used to create a snapshot of the current state.
+     * Возвращает копию [RichTextState].
+     * Может использоваться для создания снимка текущего состояния.
      *
-     * @return A copy of this [RichTextState].
+     * @return Копия [RichTextState].
      */
     public fun copy(): RichTextState {
         val richParagraphList = richParagraphList.map { it.copy() }
@@ -3806,9 +3801,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Updates the [RichTextState] with the given [text].
+     * Обновляет [RichTextState] переданным [text].
      *
-     * @param text The text to update the [RichTextState] with.
+     * @param text Текст для обновления состояния.
      */
     public fun setText(
         text: String,
@@ -3827,9 +3822,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Updates the [RichTextState] with the given [html].
+     * Обновляет [RichTextState] переданным [html].
      *
-     * @param html The html to update the [RichTextState] with.
+     * @param html HTML для установки.
      */
     public fun setHtml(html: String): RichTextState {
         val richParagraphList = RichTextStateHtmlParser.encode(html).richParagraphList
@@ -3839,9 +3834,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Inserts the given [html] content after selection in the [RichTextState].
+     * Вставляет HTML после текущего выделения.
      *
-     * @param html The html content to insert.
+     * @param html HTML-контент для вставки.
      */
     public fun insertHtmlAfterSelection(html: String) {
         val newParagraphs = RichTextStateHtmlParser.encode(html).richParagraphList
@@ -3856,24 +3851,24 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Inserts the given [html] content at the specified [position] in the [RichTextState].
+     * Вставляет HTML в указанную [position] в [RichTextState].
      *
-     * The insertion behavior depends on the HTML content and the insertion position:
-     * 1. If the HTML contains a single paragraph:
-     *    - The content is inserted at the exact position within the existing paragraph
-     *    - All styles (both span and rich span styles) are preserved
-     * 2. If the HTML contains multiple paragraphs:
-     *    - The current paragraph is split at the insertion point
-     *    - The new paragraphs are inserted between the split parts
-     *    - All styles from the original paragraph are preserved in both split parts
+     * Поведение зависит от содержимого:
+     * 1. Один параграф:
+     *    - Вставка в текущий параграф
+     *    - Стили сохраняются
+     * 2. Несколько параграфов:
+     *    - Текущий параграф разделяется
+     *    - Новые вставляются между частями
+     *    - Стили сохраняются
      *
-     * Special cases:
-     * - If position is 0, the content is inserted at the start
-     * - If position equals text length, the content is appended at the end
-     * - If the HTML is empty, no changes are made
+     * Особые случаи:
+     * - position = 0 → вставка в начало
+     * - position = длина текста → вставка в конец
+     * - пустой HTML → без изменений
      *
-     * @param html The html content to insert.
-     * @param position The position at which to insert the html content.
+     * @param html HTML-контент
+     * @param position позиция вставки
      */
     public fun insertHtml(html: String, position: Int) {
         val newParagraphs = RichTextStateHtmlParser.encode(html).richParagraphList
@@ -3885,9 +3880,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Updates the [RichTextState] with the given [markdown].
+     * Обновляет [RichTextState] из Markdown.
      *
-     * @param markdown The markdown to update the [RichTextState] with.
+     * @param markdown Markdown-текст
      */
     public fun setMarkdown(markdown: String): RichTextState {
         val richParagraphList = RichTextStateMarkdownParser.encode(markdown).richParagraphList
@@ -3897,9 +3892,9 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Inserts the given [markdown] content after selection in the [RichTextState].
+     * Вставляет Markdown после выделения.
      *
-     * @param markdown The markdown content to insert.
+     * @param markdown Markdown-контент
      */
     public fun insertMarkdownAfterSelection(markdown: String) {
         val newParagraphs = RichTextStateMarkdownParser.encode(markdown).richParagraphList
@@ -3914,24 +3909,24 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Inserts the given [markdown] content at the specified [position] in the [RichTextState].
+     * Вставляет указанное [markdown] содержимое в указанную [позицию] в [RichTextState].
      *
-     * The insertion behavior depends on the Markdown content and the insertion position:
-     * 1. If the Markdown contains a single paragraph:
-     *    - The content is inserted at the exact position within the existing paragraph
-     *    - All styles (both span and rich span styles) are preserved
-     * 2. If the Markdown contains multiple paragraphs:
-     *    - The current paragraph is split at the insertion point
-     *    - The new paragraphs are inserted between the split parts
-     *    - All styles from the original paragraph are preserved in both split parts
+     * Поведение вставки зависит от содержимого Markdown и позиции вставки:
+     * 1. Если Markdown содержит один абзац:
+     *    - Содержимое вставляется точно в указанную позицию внутри существующего абзаца
+     *    - Все стили (как строчные, так и блочные) сохраняются
+     * 2. Если Markdown содержит несколько абзацев:
+     *    - Текущий абзац разделяется в точке вставки
+     *    - Новые абзацы вставляются между разделёнными частями
+     *    - Все стили исходного абзаца сохраняются в обеих разделённых частях
      *
-     * Special cases:
-     * - If position is 0, the content is inserted at the start
-     * - If position equals text length, the content is appended at the end
-     * - If the Markdown is empty, no changes are made
+     * Особые случаи:
+     * - Если позиция равна 0, содержимое вставляется в начало
+     * - Если позиция равна длине текста, содержимое добавляется в конец
+     * - Если Markdown пуст, изменения не производятся
      *
-     * @param markdown The markdown content to insert.
-     * @param position The position at which to insert the markdown content.
+     * @param markdown Вставляемое содержимое в формате Markdown.
+     * @param позиция Позиция, в которую нужно вставить содержимое Markdown.
      */
     public fun insertMarkdown(markdown: String, position: Int) {
         val newParagraphs = RichTextStateMarkdownParser.encode(markdown).richParagraphList
@@ -3943,24 +3938,24 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Inserts the given [newParagraphs] at the specified [position] in the [RichTextState].
+     * Вставляет указанные [newParagraphs] в указанную [позицию] в [RichTextState].
      *
-     * The insertion behavior depends on the paragraphs and the insertion position:
-     * 1. If the list contains a single paragraph:
-     *    - The content is inserted at the exact position within the existing paragraph
-     *    - All styles (both span and rich span styles) are preserved
-     * 2. If the list contains multiple paragraphs:
-     *    - The current paragraph is split at the insertion point
-     *    - The new paragraphs are inserted between the split parts
-     *    - All styles from the original paragraph are preserved in both split parts
+     * Поведение вставки зависит от списка абзацев и позиции вставки:
+     * 1. Если список содержит один абзац:
+     *    - Содержимое вставляется точно в указанную позицию внутри существующего абзаца
+     *    - Все стили (как строчные, так и блочные) сохраняются
+     * 2. Если список содержит несколько абзацев:
+     *    - Текущий абзац разделяется в точке вставки
+     *    - Новые абзацы вставляются между разделёнными частями
+     *    - Все стили исходного абзаца сохраняются в обеих разделённых частях
      *
-     * Special cases:
-     * - If position is 0, the content is inserted at the start
-     * - If position equals text length, the content is appended at the end
-     * - If the list is empty, no changes are made
+     * Особые случаи:
+     * - Если позиция равна 0, содержимое вставляется в начало
+     * - Если позиция равна длине текста, содержимое добавляется в конец
+     * - Если список пуст, изменения не производятся
      *
-     * @param newParagraphs The new paragraphs to insert.
-     * @param position The position at which to insert the new paragraphs.
+     * @param newParagraphs Новые абзацы для вставки.
+     * @param позиция Позиция, в которую нужно вставить новые абзацы.
      */
     internal fun insertParagraphs(
         newParagraphs: List<RichParagraph>,
@@ -4063,10 +4058,10 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Updates the [RichTextState] with the given [newRichParagraphList].
-     * The [RichTextState] will be updated with the given [newRichParagraphList] and the [annotatedString] will be updated.
+     * Обновляет [RichTextState] с помощью указанного [newRichParagraphList].
+     * [RichTextState] будет обновлён с помощью указанного [newRichParagraphList], а [annotatedString] будет обновлён.
      *
-     * @param newRichParagraphList The [RichParagraph]s to update the [RichTextState] with.
+     * @param newRichParagraphList Список [RichParagraph] для обновления [RichTextState].
      */
     internal fun updateRichParagraphList(newRichParagraphList: List<RichParagraph>) {
         richParagraphList.clear()
@@ -4223,33 +4218,33 @@ public class RichTextState internal constructor(
     }
 
     /**
-     * Returns the [RichTextState] as a text string.
+     * Возвращает [RichTextState] в виде текстовой строки.
      *
-     * @return The text string.
+     * @return Текстовая строка.
      */
     public fun toText(): String =
         toText(richParagraphList = richParagraphList)
 
     /**
-     * Decodes the [RichTextState] to a html string.
+     * Декодирует [RichTextState] в HTML-строку.
      *
-     * @return The html string.
+     * @return HTML-строка.
      */
     public fun toHtml(): String {
         return RichTextStateHtmlParser.decode(this)
     }
 
     /**
-     * Decodes the [RichTextState] to a markdown string.
+     * Декодирует [RichTextState] в строку формата Markdown.
      *
-     * @return The html string.
+     * @return Строка в формате Markdown.
      */
     public fun toMarkdown(): String {
         return RichTextStateMarkdownParser.decode(this)
     }
 
     /**
-     * Clears the [RichTextState] and sets the [TextFieldValue] to an empty value.
+     * Очищает [RichTextState] и устанавливает [TextFieldValue] в пустое значение.
      */
     public fun clear() {
         richParagraphList.clear()
