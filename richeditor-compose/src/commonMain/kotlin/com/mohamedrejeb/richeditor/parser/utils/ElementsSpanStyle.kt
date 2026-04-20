@@ -7,6 +7,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 
 internal val MarkBackgroundColor = Color.Yellow
 internal val SmallFontSize = 0.8f.em
@@ -19,9 +20,9 @@ internal val SubscriptSpanStyle = SpanStyle(baselineShift = BaselineShift.Subscr
 internal val SuperscriptSpanStyle = SpanStyle(baselineShift = BaselineShift.Superscript)
 internal val MarkSpanStyle = SpanStyle(background = MarkBackgroundColor)
 internal val SmallSpanStyle = SpanStyle(fontSize = SmallFontSize)
-internal val H1SpanStyle = SpanStyle(fontSize = 2.em, fontWeight = FontWeight.Bold)
-internal val H2SpanStyle = SpanStyle(fontSize = 1.5.em, fontWeight = FontWeight.Bold)
-internal val H3SpanStyle = SpanStyle(fontSize = 1.17.em, fontWeight = FontWeight.Bold)
-internal val H4SpanStyle = SpanStyle(fontSize = 1.12.em, fontWeight = FontWeight.Bold)
-internal val H5SpanStyle = SpanStyle(fontSize = 0.83.em, fontWeight = FontWeight.Bold)
-internal val H6SpanStyle = SpanStyle(fontSize = 0.75.em, fontWeight = FontWeight.Bold)
+public val H1SpanStyle: SpanStyle = SpanStyle(fontSize = 34.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.25.sp)
+public val H2SpanStyle: SpanStyle = SpanStyle(fontSize = 24.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.sp)
+public val H3SpanStyle: SpanStyle = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.15.sp)
+public val H4SpanStyle: SpanStyle = SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.15.sp)
+public val H5SpanStyle: SpanStyle = SpanStyle(fontSize = 0.83.em, fontWeight = FontWeight.Normal)
+public val H6SpanStyle: SpanStyle = SpanStyle(fontSize = 0.75.em, fontWeight = FontWeight.Normal)

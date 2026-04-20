@@ -6,14 +6,14 @@ import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
-import com.mohamedrejeb.richeditor.model.DefaultListIndent
+import com.mohamedrejeb.richeditor.model.DefaultUnOrderListIndent
 import com.mohamedrejeb.richeditor.model.DefaultUnorderedListStyleType
 import com.mohamedrejeb.richeditor.model.RichSpan
 import com.mohamedrejeb.richeditor.model.RichTextConfig
 import com.mohamedrejeb.richeditor.paragraph.RichParagraph
 
 internal class UnorderedList private constructor(
-    initialIndent: Int = DefaultListIndent,
+    initialIndent: Int = DefaultUnOrderListIndent,
     startTextWidth: TextUnit = 0.sp,
     initialLevel: Int = 1,
     initialStyleType: UnorderedListStyleType = DefaultUnorderedListStyleType,
@@ -22,7 +22,7 @@ internal class UnorderedList private constructor(
     constructor(
         initialLevel: Int = 1,
     ): this(
-        initialIndent = DefaultListIndent,
+        initialIndent = DefaultUnOrderListIndent,
         initialLevel = initialLevel,
     )
 

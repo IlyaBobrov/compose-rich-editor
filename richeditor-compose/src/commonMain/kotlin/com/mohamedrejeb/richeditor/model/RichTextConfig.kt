@@ -50,7 +50,7 @@ public class RichTextConfig internal constructor(
     /**
      * The indent for unordered lists.
      */
-    public var unorderedListIndent: Int = DefaultListIndent
+    public var unorderedListIndent: Int = DefaultUnOrderListIndent
         set(value) {
             field = value
             updateText()
@@ -117,7 +117,8 @@ public class RichTextConfig internal constructor(
     public var exitListOnEmptyItem: Boolean = true
 }
 
-internal const val DefaultListIndent = 38
+internal const val DefaultListIndent = 24
+internal const val DefaultUnOrderListIndent = 8
 
 internal val DefaultUnorderedListStyleType =
     UnorderedListStyleType.from("•", "◦", "▪")
