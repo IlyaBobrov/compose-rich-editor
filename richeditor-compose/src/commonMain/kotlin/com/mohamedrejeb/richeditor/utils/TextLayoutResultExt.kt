@@ -113,3 +113,19 @@ public fun TextLayoutResult.getBoundingBoxes(
         )
     }
 }
+
+/**
+ * Returns the text offset for the given position, clamped to the line boundaries.
+ * This prevents the cursor from jumping to the next line when clicking beyond the end of a line.
+ *
+ * @param position the position to get the offset for.
+ * @return the clamped text offset.
+ */
+@InternalRichTextApi
+public fun TextLayoutResult.getOffsetForPositionClamped(position: Offset): Int {
+    val line = getLineForVerticalPosition(position.y)
+    val offset = getOffsetForPosition(position)
+    val lineStart = getLineStart(line)
+    val lineEnd = getLineEnd(line, visibleEnd = true)
+    return offset.coerceIn(lineStart, lineEnd)
+}

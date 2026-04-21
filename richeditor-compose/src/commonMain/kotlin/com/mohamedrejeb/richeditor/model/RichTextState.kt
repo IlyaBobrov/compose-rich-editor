@@ -40,6 +40,7 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
+import com.mohamedrejeb.richeditor.annotation.InternalRichTextApi
 import com.mohamedrejeb.richeditor.paragraph.RichParagraph
 import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableListLevel
 import com.mohamedrejeb.richeditor.paragraph.type.ConfigurableStartTextWidth
@@ -56,14 +57,11 @@ import com.mohamedrejeb.richeditor.utils.customMerge
 import com.mohamedrejeb.richeditor.utils.getCommonRichStyle
 import com.mohamedrejeb.richeditor.utils.getCommonStyle
 import com.mohamedrejeb.richeditor.utils.getCommonType
+import com.mohamedrejeb.richeditor.utils.getOffsetForPositionClamped
 import com.mohamedrejeb.richeditor.utils.isSpecifiedFieldsEquals
 import com.mohamedrejeb.richeditor.utils.removeRange
 import com.mohamedrejeb.richeditor.utils.toText
 import com.mohamedrejeb.richeditor.utils.unmerge
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.reflect.KClass
@@ -243,7 +241,9 @@ public class RichTextState internal constructor(
         private set
     public var isHeading: Boolean by mutableStateOf(currentRichParagraphType is Heading)
         private set
-    public var currentHeadingLevel: Int by mutableStateOf((currentRichParagraphType as? Heading)?.level ?: 0)
+    public var currentHeadingLevel: Int by mutableStateOf(
+        (currentRichParagraphType as? Heading)?.level ?: 0
+    )
         private set
     public var isList: Boolean by mutableStateOf(isUnorderedList || isOrderedList)
         private set
@@ -1057,14 +1057,14 @@ public class RichTextState internal constructor(
     }
 
     private fun getHead(level: Int): SpanStyle = when (level) {
-            1 -> com.mohamedrejeb.richeditor.parser.utils.H1SpanStyle
-            2 -> com.mohamedrejeb.richeditor.parser.utils.H2SpanStyle
-            3 -> com.mohamedrejeb.richeditor.parser.utils.H3SpanStyle
-            4 -> com.mohamedrejeb.richeditor.parser.utils.H4SpanStyle
-            5 -> com.mohamedrejeb.richeditor.parser.utils.H5SpanStyle
-            6 -> com.mohamedrejeb.richeditor.parser.utils.H6SpanStyle
-            else -> SpanStyle()
-        }
+        1 -> com.mohamedrejeb.richeditor.parser.utils.H1SpanStyle
+        2 -> com.mohamedrejeb.richeditor.parser.utils.H2SpanStyle
+        3 -> com.mohamedrejeb.richeditor.parser.utils.H3SpanStyle
+        4 -> com.mohamedrejeb.richeditor.parser.utils.H4SpanStyle
+        5 -> com.mohamedrejeb.richeditor.parser.utils.H5SpanStyle
+        6 -> com.mohamedrejeb.richeditor.parser.utils.H6SpanStyle
+        else -> SpanStyle()
+    }
 
 
     /**
@@ -1760,7 +1760,9 @@ public class RichTextState internal constructor(
                 }
 
                 withStyle(richParagraph.paragraphStyle.merge(richParagraph.type.getStyle(config))) {
-                    withStyle(richParagraph.getStartTextSpanStyle() ?: RichSpanStyle.DefaultSpanStyle) {
+                    withStyle(
+                        richParagraph.getStartTextSpanStyle() ?: RichSpanStyle.DefaultSpanStyle
+                    ) {
                         append(richParagraph.type.startText)
                     }
                     val richParagraphStartTextLength = richParagraph.type.startText.length
@@ -3374,7 +3376,9 @@ public class RichTextState internal constructor(
             isUnorderedList = richParagraphList.all { it.type is UnorderedList }
             isOrderedList = richParagraphList.all { it.type is OrderedList }
             isHeading = richParagraphList.all { it.type is Heading }
-            currentHeadingLevel = if (isHeading) (richParagraphList.firstOrNull()?.type as? Heading)?.level ?: 0 else 0
+            currentHeadingLevel =
+                if (isHeading) (richParagraphList.firstOrNull()?.type as? Heading)?.level
+                    ?: 0 else 0
             isList = richParagraphList.all { it.type is UnorderedList || it.type is OrderedList }
             canIncreaseListLevel = canIncreaseListLevel(richParagraphList)
             canDecreaseListLevel = canDecreaseListLevel(richParagraphList)
@@ -3466,34 +3470,32 @@ public class RichTextState internal constructor(
         return richSpan
     }
 
+    public fun handleTripleClick() {
+        val cursor = textFieldValue.selection.start
+
+        val paragraph = richParagraphList.firstOrNull {
+            cursor in it.getTextRange().min until it.getTextRange().max
+        } ?: return
+
+        val range = paragraph.getTextRange()
+
+        val isLast = richParagraphList.lastOrNull() == paragraph
+        val end = if (isLast) range.max else range.max + 1
+
+        updateTextFieldValue(
+            textFieldValue.copy(selection = TextRange(range.min, end))
+        )
+    }
+
+    @OptIn(InternalRichTextApi::class)
     private fun getRichSpanByOffset(offset: Offset): RichSpan? {
         this.textLayoutResult?.let { textLayoutResult ->
-            val position = textLayoutResult.getOffsetForPosition(offset)
+            val position = textLayoutResult.getOffsetForPositionClamped(offset)
             return getRichSpanByTextIndex(position, true)
         }
         return null
     }
 
-    /**
-     * Корректирует [selection] в соответствии с [pressPosition].
-     * Это обходное решение для [TextField], когда [selection] не всегда корректен при наличии нескольких строк.
-     *
-     * @param pressPosition Позиция нажатия.
-     */
-    internal suspend fun adjustSelectionAndRegisterPressPosition(
-        pressPosition: Offset,
-    ) {
-        adjustSelection(pressPosition)
-        registerLastPressPosition(pressPosition)
-    }
-
-    /**
-     * Корректирует [selection] в соответствии с [pressPosition].
-     * Это обходное решение для [TextField], когда [selection] не всегда корректен при наличии нескольких строк.
-     *
-     * @param pressPosition Позиция нажатия.
-     * @param newSelection Новое выделение.
-     */
     private fun adjustSelection(
         pressPosition: Offset,
         newSelection: TextRange? = null,
@@ -3610,23 +3612,6 @@ public class RichTextState internal constructor(
         }
     }
 
-    private var registerLastPressPositionJob: Job? = null
-    private suspend fun registerLastPressPosition(pressPosition: Offset): Unit = coroutineScope {
-        registerLastPressPositionJob?.cancel()
-        registerLastPressPositionJob = launch {
-            lastPressPosition = pressPosition
-            delay(300)
-            lastPressPosition = null
-        }
-    }
-
-    /**
-     * Возвращает [RichParagraph], который содержит указанный [textIndex].
-     * Если ни один [RichParagraph] не содержит указанный [textIndex], возвращается null.
-     *
-     * @param textIndex Индекс текста для поиска.
-     * @return [RichParagraph], содержащий указанный [textIndex], или null, если такого [RichParagraph] не существует.
-     */
     private fun getRichParagraphByTextIndex(
         textIndex: Int,
     ): RichParagraph? {
@@ -4283,7 +4268,8 @@ public class RichTextState internal constructor(
     private fun commitCompositionIfNeeded() {
         val compositionRange = textFieldValue.composition
         if (compositionRange != null) {
-            val composedText = textFieldValue.text.substring(compositionRange.min, compositionRange.max)
+            val composedText =
+                textFieldValue.text.substring(compositionRange.min, compositionRange.max)
             replaceTextRange(compositionRange, composedText)
             // После коммита очищаем составление
             textFieldValue = textFieldValue.copy(composition = null)

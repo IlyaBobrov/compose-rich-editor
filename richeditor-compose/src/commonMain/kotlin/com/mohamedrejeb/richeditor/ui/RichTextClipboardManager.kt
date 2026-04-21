@@ -63,7 +63,7 @@ public class RichTextClipboardManager(
                                 if (
                                     !selection.collapsed &&
                                     selection.min < index + 1 &&
-                                    selection.max > index
+                                    selection.max >= index
                                 ) appendLine()
                                 index++
                             }

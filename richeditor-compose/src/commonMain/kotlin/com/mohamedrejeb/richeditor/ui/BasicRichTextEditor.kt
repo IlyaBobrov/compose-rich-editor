@@ -1,14 +1,20 @@
 package com.mohamedrejeb.richeditor.ui
 
+import android.view.ViewConfiguration
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
@@ -16,6 +22,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -23,10 +35,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import com.mohamedrejeb.richeditor.model.RichTextState
-import kotlinx.coroutines.CoroutineScope
 
 /**
  * Basic composable that enables users to edit rich text via hardware or software keyboard, but provides no decorations like hint or placeholder.
@@ -208,27 +217,6 @@ public fun BasicRichTextEditor(
         state.singleParagraphMode = singleParagraph
     }
 
-    if (!singleParagraph) {
-        // Workaround for Android to fix a bug in BasicTextField where it doesn't select the correct text
-        // when the text contains multiple paragraphs.
-        LaunchedEffect(interactionSource) {
-            interactionSource.interactions.collect { interaction ->
-                if (interaction is PressInteraction.Press) {
-                    val pressPosition = interaction.pressPosition
-                    val topPadding = with(density) { contentPadding.calculateTopPadding().toPx() }
-                    val startPadding = with(density) { contentPadding.calculateStartPadding(layoutDirection).toPx() }
-
-                    adjustTextIndicatorOffset(
-                        pressPosition = pressPosition,
-                        state = state,
-                        topPadding = topPadding,
-                        startPadding = startPadding,
-                    )
-                }
-            }
-        }
-    }
-
     CompositionLocalProvider(LocalClipboardManager provides richClipboardManager) {
         BasicTextField(
             value = state.textFieldValue,
@@ -239,6 +227,33 @@ public fun BasicRichTextEditor(
                 state.onTextFieldValueChange(it)
             },
             modifier = modifier
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        // 1. Ждем первое нажатие (не блокируем систему)
+                        val firstDown = awaitFirstDown(
+                            requireUnconsumed = false,
+                            pass = PointerEventPass.Initial
+                        )
+                        val firstUp = waitForUpOrCancellation(pass = PointerEventPass.Initial)
+
+                        // 2. Ждем второе нажатие
+                        val secondDown =
+                            awaitSecondDownOrNull(firstUp, pass = PointerEventPass.Initial)
+                        val secondUp =
+                            secondDown?.let { waitForUpOrCancellation(pass = PointerEventPass.Initial) }
+
+                        // 3. Ждем третье нажатие
+                        val thirdDown = if (secondUp != null) {
+                            awaitSecondDownOrNull(secondUp, pass = PointerEventPass.Initial)
+                        } else null
+
+                        if (thirdDown != null) {
+                            // Тройной клик. Поглощаем событие, чтобы BasicTextField его не увидел
+                            thirdDown.consume()
+                            state.handleTripleClick()
+                        }
+                    }
+                }
                 .onPreviewKeyEvent { event ->
                     if (readOnly)
                         return@onPreviewKeyEvent false
@@ -248,28 +263,15 @@ public fun BasicRichTextEditor(
                 .drawRichSpanStyle(
                     richTextState = state,
                     topPadding = with(density) { contentPadding.calculateTopPadding().toPx() },
-                    startPadding = with(density) { contentPadding.calculateStartPadding(layoutDirection).toPx() },
+                    startPadding = with(density) {
+                        contentPadding.calculateStartPadding(layoutDirection).toPx()
+                    },
                 )
                 .then(
                     if (!readOnly)
                         Modifier
                     else
                         Modifier.focusProperties { canFocus = false }
-                )
-                .then(
-                    if (singleParagraph)
-                        Modifier
-                    else
-                        Modifier
-                            // Workaround for Desktop to fix a bug in BasicTextField where it doesn't select the correct text
-                            // when the text contains multiple paragraphs.
-                            .adjustTextIndicatorOffset(
-                                state = state,
-                                contentPadding = contentPadding,
-                                density = density,
-                                layoutDirection = layoutDirection,
-                                scope = rememberCoroutineScope()
-                            )
                 ),
             enabled = enabled,
             readOnly = readOnly,
@@ -294,26 +296,40 @@ public fun BasicRichTextEditor(
     }
 }
 
-public expect fun Modifier.adjustTextIndicatorOffset(
-    state: RichTextState,
-    contentPadding: PaddingValues,
-    density: Density,
-    layoutDirection: LayoutDirection,
-    scope: CoroutineScope,
-): Modifier
+public typealias RichTextChangedListener = (RichTextState) -> Unit
 
-public suspend fun adjustTextIndicatorOffset(
-    pressPosition: Offset,
-    state: RichTextState,
-    topPadding: Float,
-    startPadding: Float,
-) {
-    state.adjustSelectionAndRegisterPressPosition(
-        pressPosition = Offset(
-            x = pressPosition.x - startPadding,
-            y = pressPosition.y - topPadding
-        ),
-    )
+public suspend fun AwaitPointerEventScope.awaitSecondDownOrNull(
+    firstUp: PointerInputChange?,
+    pass: PointerEventPass = PointerEventPass.Final
+): PointerInputChange? {
+    if (firstUp == null) return null
+
+    return withTimeoutOrNull(ViewConfiguration.getDoubleTapTimeout().toLong()) {
+        var secondDown: PointerInputChange? = null
+
+        while (secondDown == null) {
+            val event = awaitPointerEvent(pass)
+
+            secondDown = event.changes.firstOrNull {
+                it.changedToDown()
+            }
+        }
+
+        secondDown
+    }
 }
 
-public typealias RichTextChangedListener = (RichTextState) -> Unit
+public suspend fun AwaitPointerEventScope.waitForUpOrCancellation(
+    pass: PointerEventPass = PointerEventPass.Final
+): PointerInputChange? {
+    while (true) {
+        val event = awaitPointerEvent(pass)
+
+        val up = event.changes.firstOrNull { it.changedToUp() }
+        if (up != null) return up
+
+        // Если событие поглощено на фазе Final, это значит жест отменен (например, начался скролл)
+        val canceled = event.changes.any { it.isConsumed }
+        if (canceled && pass == PointerEventPass.Final) return null
+    }
+}

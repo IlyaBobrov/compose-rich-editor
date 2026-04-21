@@ -20,3 +20,5 @@ internal enum class Platform {
 }
 
 internal expect val currentPlatform: Platform
+
+internal expect fun getCurrentTimeMillis(): Long
