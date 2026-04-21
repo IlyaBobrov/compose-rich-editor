@@ -24,27 +24,6 @@ kotlin {
         }
     }
 
-    jvm("desktop") {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
-    }
-
-    js(IR).browser()
-//    @OptIn(ExperimentalWasmDsl::class)
-//    wasmJs {
-//        browser {
-//            testTask {
-//                enabled = false
-//            }
-//        }
-//    }
-
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-
     sourceSets.commonMain.dependencies {
         implementation(compose.runtime)
         implementation(compose.foundation)
@@ -65,10 +44,10 @@ kotlin {
         implementation(compose.uiTest)
     }
 
-    sourceSets.named("desktopTest").dependencies {
-        implementation(compose.desktop.uiTestJUnit4)
-        implementation(compose.desktop.currentOs)
-    }
+//    sourceSets.named("desktopTest").dependencies {
+//        implementation(compose.desktop.uiTestJUnit4)
+//        implementation(compose.desktop.currentOs)
+//    }
 }
 
 android {

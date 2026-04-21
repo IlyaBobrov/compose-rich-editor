@@ -30,7 +30,5 @@ include(
     ":richeditor-compose-coil3",
 
     ":sample:android",
-    ":sample:desktop",
-//    ":sample:web",
     ":sample:common",
 )

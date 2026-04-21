@@ -23,32 +23,6 @@ kotlin {
         }
     }
 
-    jvm("desktop") {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
-    }
-
-    js(IR) {
-        browser()
-    }
-
-//    @OptIn(ExperimentalWasmDsl::class)
-//    wasmJs()
-//    @OptIn(ExperimentalWasmDsl::class)
-//    wasmJs {
-//        browser {
-//            testTask {
-//                enabled = false
-//            }
-//        }
-//    }
-
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-
     sourceSets.commonMain.dependencies {
         implementation(projects.richeditorCompose)
 
