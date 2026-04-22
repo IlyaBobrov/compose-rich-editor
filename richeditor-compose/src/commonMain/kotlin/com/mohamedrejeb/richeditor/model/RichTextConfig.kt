@@ -117,7 +117,7 @@ public class RichTextConfig internal constructor(
     public var exitListOnEmptyItem: Boolean = true
 }
 
-internal const val DefaultListIndent = 24
+internal const val DefaultListIndent = 30
 internal const val DefaultUnOrderListIndent = 8
 
 internal val DefaultUnorderedListStyleType =
