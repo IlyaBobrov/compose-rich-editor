@@ -1,5 +1,6 @@
 package com.mohamedrejeb.richeditor.ui.material3
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -55,8 +57,12 @@ public fun RichTextEditorPro(
         } else {
             RichTextEditorDefaults.richTextEditorWithLabelPadding()
         },
+    onScrollStateReady: (ScrollState) -> Unit = {},
 ) {
     RichCursorWrapper(state) { scrollState, onLayoutResult, onSizeChanged ->
+        LaunchedEffect(scrollState) {
+            onScrollStateReady(scrollState)
+        }
         RichTextEditor(
             state = state,
             modifier = Modifier
