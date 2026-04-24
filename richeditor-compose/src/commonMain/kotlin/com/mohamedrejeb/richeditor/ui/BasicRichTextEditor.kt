@@ -1,9 +1,6 @@
 package com.mohamedrejeb.richeditor.ui
 
 import android.view.ViewConfiguration
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,7 +14,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -27,7 +23,6 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.changedToUp
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -35,6 +30,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import com.mohamedrejeb.richeditor.model.RichTextState
 
 /**
@@ -201,7 +197,8 @@ public fun BasicRichTextEditor(
     cursorBrush: Brush = SolidColor(Color.Black),
     decorationBox: @Composable (innerTextField: @Composable () -> Unit) -> Unit =
         @Composable { innerTextField -> innerTextField() },
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues,
+    onValueChange: (TextFieldValue) -> TextFieldValue = { value -> value }
 ) {
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
@@ -223,11 +220,12 @@ public fun BasicRichTextEditor(
             onValueChange = {
                 if (readOnly) return@BasicTextField
                 if (it.text.length > maxLength) return@BasicTextField
-
-                state.onTextFieldValueChange(it)
+                val changes = onValueChange(it)
+                state.onTextFieldValueChange(changes)
             },
             modifier = modifier
-                .pointerInput(Unit) {
+                //перенесено в RichTextEditorPro
+                /*.pointerInput(Unit) {
                     awaitEachGesture {
                         // 1. Ждем первое нажатие (не блокируем систему)
                         val firstDown = awaitFirstDown(
@@ -253,7 +251,7 @@ public fun BasicRichTextEditor(
                             state.handleTripleClick()
                         }
                     }
-                }
+                }*/
                 .onPreviewKeyEvent { event ->
                     if (readOnly)
                         return@onPreviewKeyEvent false

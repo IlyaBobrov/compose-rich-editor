@@ -129,3 +129,24 @@ public fun TextLayoutResult.getOffsetForPositionClamped(position: Offset): Int {
     val lineEnd = getLineEnd(line, visibleEnd = true)
     return offset.coerceIn(lineStart, lineEnd)
 }
+
+public fun TextLayoutResult.getOffsetForPositionStrict(position: Offset): Int {
+    val lineIndex = getLineForVerticalPosition(position.y)
+
+    val lineStart = getLineStart(lineIndex)
+    // visibleEnd = true не помогает если \n заменён пробелом.
+    // Берём raw lineEnd и вручную отступаем на 1 если последний символ — пробел-заменитель параграфа.
+    val lineEndRaw = getLineEnd(lineIndex, visibleEnd = false)
+    val lineEndVisible = getLineEnd(lineIndex, visibleEnd = true)
+    // Если visibleEnd < rawEnd — значит есть trailing символ (newline/пробел-заменитель), не включаем его
+    val lineEnd = if (lineEndVisible < lineEndRaw) lineEndVisible else lineEndRaw
+
+    val lineLeft = getLineLeft(lineIndex)
+    val lineRight = getLineRight(lineIndex)
+
+    return when {
+        position.x <= lineLeft -> lineStart
+        position.x >= lineRight -> lineEnd
+        else -> getOffsetForPosition(position).coerceIn(lineStart, lineEnd)
+    }
+}

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -141,6 +142,7 @@ public fun RichTextEditor(
         @Composable { content ->
             content()
         },
+    onValueChange: (TextFieldValue) -> TextFieldValue = { value -> value }
 ) {
     // If color is not provided via the text style, use content color as a default
     val textColor = textStyle.color.takeOrElse {
@@ -191,6 +193,7 @@ public fun RichTextEditor(
                 }
             },
             contentPadding = contentPadding,
+            onValueChange = onValueChange
         )
     }
 }
