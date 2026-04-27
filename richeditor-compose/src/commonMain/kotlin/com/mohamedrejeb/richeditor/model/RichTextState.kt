@@ -109,6 +109,13 @@ public class RichTextState internal constructor(
             }
         }
 
+    /**
+     * Последнее выделение, которое не было пустым (collapsed).
+     * Используется для копирования, если системное выделение сбросилось.
+     */
+    internal var lastNonCollapsedSelection: TextRange = TextRange.Zero
+        private set
+
     public val composition: TextRange? get() = textFieldValue.composition
 
     public var singleParagraphMode: Boolean by mutableStateOf(false)
@@ -1698,6 +1705,10 @@ public class RichTextState internal constructor(
      */
     private fun updateTextFieldValue(newTextFieldValue: TextFieldValue = tempTextFieldValue) {
         tempTextFieldValue = newTextFieldValue
+
+        if (!newTextFieldValue.selection.collapsed) {
+            lastNonCollapsedSelection = newTextFieldValue.selection
+        }
 
         if (!singleParagraphMode) {
             // Check for paragraphs

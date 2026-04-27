@@ -1,5 +1,6 @@
 package com.mohamedrejeb.richeditor.ui
 
+import android.util.Log
 import android.view.ViewConfiguration
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,7 +24,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.changedToUp
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextLayoutResult
@@ -202,11 +203,11 @@ public fun BasicRichTextEditor(
 ) {
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val richClipboardManager = remember(state) {
         RichTextClipboardManager(
             richTextState = state,
-            clipboardManager = clipboardManager
+            clipboard = clipboardManager
         )
     }
 
@@ -214,7 +215,7 @@ public fun BasicRichTextEditor(
         state.singleParagraphMode = singleParagraph
     }
 
-    CompositionLocalProvider(LocalClipboardManager provides richClipboardManager) {
+    CompositionLocalProvider(LocalClipboard provides richClipboardManager) {
         BasicTextField(
             value = state.textFieldValue,
             onValueChange = {

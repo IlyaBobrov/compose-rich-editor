@@ -1,77 +1,110 @@
 package com.mohamedrejeb.richeditor.ui
 
-import androidx.compose.ui.platform.ClipboardManager
+import android.content.ClipData
+import android.util.Log
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.NativeClipboard
+import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.util.fastForEachIndexed
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.model.RichSpanStyle
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType.Companion.startText
 import com.mohamedrejeb.richeditor.utils.append
-import androidx.compose.ui.util.fastForEachIndexed
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * A [ClipboardManager] that can handle [RichTextState].
- * It will convert the [RichTextState] to [AnnotatedString] and delegate the [ClipboardManager] to handle the rest.
- *
- * @param richTextState The [RichTextState] to be handled.
- * @param clipboardManager The [ClipboardManager] to delegate the rest of the work to.
- */
 public class RichTextClipboardManager(
     private val richTextState: RichTextState,
-    private val clipboardManager: ClipboardManager
-): ClipboardManager {
-    override fun getText(): AnnotatedString? {
-        return clipboardManager.getText()
+    private val clipboard: Clipboard
+) : Clipboard {
+
+    override val nativeClipboard: NativeClipboard
+        get() = clipboard.nativeClipboard
+
+    override suspend fun getClipEntry(): ClipEntry? {
+        return clipboard.getClipEntry()
     }
 
     @OptIn(ExperimentalRichTextApi::class)
-    override fun setText(annotatedString: AnnotatedString) {
-        val selection = richTextState.selection
-        val richTextAnnotatedString = buildAnnotatedString {
+    override suspend fun setClipEntry(clipEntry: ClipEntry?) {
+        val selection = if (richTextState.selection.collapsed)
+            richTextState.lastNonCollapsedSelection
+        else
+            richTextState.selection
+
+        Log.d("RICH_CLIPBOARD_TAG", "setClipEntry (effective): $selection")
+        Log.d("RICH_CLIPBOARD_TAG", "selection.collapsed: ${selection.collapsed}")
+
+        if (selection.collapsed) {
+            clipboard.setClipEntry(clipEntry)
+            return
+        }
+
+        val annotatedString = buildAnnotatedString {
             var index = 0
-            richTextState.richParagraphList.fastForEachIndexed { i, richParagraphStyle ->
+
+            richTextState.richParagraphList.fastForEachIndexed { i, paragraph ->
                 withStyle(
-                    richParagraphStyle.paragraphStyle.merge(
-                        richParagraphStyle.type.getStyle(richTextState.config)
+                    paragraph.paragraphStyle.merge(
+                        paragraph.type.getStyle(richTextState.config)
                     )
                 ) {
+                    // --- startText ---
+                    val startText = paragraph.type.startText
+
                     if (
-                        !selection.collapsed &&
-                        selection.min < index + richParagraphStyle.type.startText.length &&
+                        selection.min < index + startText.length &&
                         selection.max > index
                     ) {
-                        val selectedText = richParagraphStyle.type.startText.substring(
+                        val selectedText = startText.substring(
                             max(0, selection.min - index),
-                            min(selection.max - index, richParagraphStyle.type.startText.length)
+                            min(selection.max - index, startText.length)
                         )
+                        Log.d("RICH_CLIPBOARD_TAG", "$selectedText")
                         append(selectedText)
                     }
-                    index += richParagraphStyle.type.startText.length
+
+                    index += startText.length
+
+                    // --- spans ---
                     withStyle(RichSpanStyle.DefaultSpanStyle) {
                         index = append(
-                            richSpanList = richParagraphStyle.children,
+                            richSpanList = paragraph.children,
                             startIndex = index,
                             selection = selection,
                             richTextConfig = richTextState.config,
                         )
-                        if (!richTextState.singleParagraphMode) {
-                            if (i != richTextState.richParagraphList.lastIndex) {
-                                if (
-                                    !selection.collapsed &&
-                                    selection.min < index + 1 &&
-                                    selection.max >= index
-                                ) appendLine()
-                                index++
+
+                        // --- перенос строки ---
+                        if (!richTextState.singleParagraphMode &&
+                            i != richTextState.richParagraphList.lastIndex
+                        ) {
+                            if (
+                                selection.min < index + 1 &&
+                                selection.max >= index
+                            ) {
+                                appendLine()
                             }
+                            index++
                         }
                     }
                 }
             }
         }
-        clipboardManager.setText(richTextAnnotatedString)
+
+        clipboard.setClipEntry(annotatedString.toClipEntrySafe())
     }
+}
+
+private fun AnnotatedString.toClipEntrySafe(): ClipEntry {
+    val clipData = ClipData.newPlainText(
+        "rich_text",
+        this.text // важно: используем plain text
+    )
+    return clipData.toClipEntry()
 }
