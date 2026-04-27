@@ -137,14 +137,11 @@ internal class RichParagraph(
     }
 
     fun getTextRange(): TextRange {
-        var start = type.startRichSpan.textRange.min
-        var end = 0
-
-        if (type.startRichSpan.text.isNotEmpty())
-            end += type.startRichSpan.text.length
+        val start = type.startRichSpan.textRange.min
+        var end = type.startRichSpan.textRange.max
 
         children.lastOrNull()?.let { richSpan ->
-            end = richSpan.fullTextRange.end
+            end = richSpan.fullTextRange.max
         }
 
         return TextRange(start, end)
@@ -201,7 +198,7 @@ internal class RichParagraph(
 
     fun getFirstNonEmptyChild(offset: Int = -1): RichSpan? {
         children.fastForEach { richSpan ->
-            if (richSpan.text.isNotEmpty()) {
+            if (richSpan.text.isNotEmpty() || richSpan.children.isNotEmpty()) {
                 if (offset != -1)
                     richSpan.textRange = TextRange(offset, offset + richSpan.text.length)
 

@@ -431,7 +431,11 @@ internal class RichSpan(
         index += this.text.length
 
         // Check if the text index is in the start text range
-        if (searchTextRange.min < textRange.max && searchTextRange.max > textRange.min)
+        if (
+            (searchTextRange.min < textRange.max && searchTextRange.max > textRange.min) ||
+            (searchTextRange.collapsed && searchTextRange.min >= textRange.min && searchTextRange.min <= textRange.max) ||
+            (textRange.collapsed && textRange.min >= searchTextRange.min && textRange.min <= searchTextRange.max)
+        )
             richSpanList.add(this)
 
         // Check if the text index is in the children

@@ -16,7 +16,7 @@ internal class Heading(val level: Int) : ParagraphType {
         RichSpan(paragraph = RichParagraph(type = this))
 
     override fun getNextParagraphType(): ParagraphType =
-        DefaultParagraph()
+        Heading(level)
 
     override fun copy(): ParagraphType =
         Heading(level)
