@@ -38,6 +38,8 @@ public fun RichCursorWrapper(
     )
 
     LaunchedEffect(richFieldValue.selection, size) {
+        if (!richFieldValue.selection.collapsed) return@LaunchedEffect
+
         val cursorInView = richFieldValue.isCursorInView(
             layoutResult = layoutResult ?: return@LaunchedEffect,
             height = size.height.toFloat(),

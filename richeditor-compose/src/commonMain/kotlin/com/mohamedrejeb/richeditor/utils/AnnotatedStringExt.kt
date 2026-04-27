@@ -12,7 +12,6 @@ import com.mohamedrejeb.richeditor.model.RichSpan
 import com.mohamedrejeb.richeditor.model.RichSpanStyle
 import com.mohamedrejeb.richeditor.model.RichTextConfig
 import com.mohamedrejeb.richeditor.model.RichTextState
-import com.mohamedrejeb.richeditor.ui.RichTextClipboardManager
 import kotlin.math.max
 import kotlin.math.min
 
