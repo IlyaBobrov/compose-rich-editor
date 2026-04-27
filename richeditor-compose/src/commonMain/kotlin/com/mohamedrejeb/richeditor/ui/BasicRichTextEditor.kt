@@ -29,10 +29,19 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.util.fastForEachIndexed
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
+import com.mohamedrejeb.richeditor.model.RichSpanStyle
 import com.mohamedrejeb.richeditor.model.RichTextState
+import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType.Companion.startText
+import com.mohamedrejeb.richeditor.utils.append
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Basic composable that enables users to edit rich text via hardware or software keyboard, but provides no decorations like hint or placeholder.
@@ -204,10 +213,17 @@ public fun BasicRichTextEditor(
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     val clipboardManager = LocalClipboard.current
-    val richClipboardManager = remember(state) {
-        RichTextClipboardManager(
+
+    val rememberCopy = remember(state.selection) {
+        prepareTextToCopy(state)
+    }
+
+    val richClipboardManager = remember(state, clipboardManager, rememberCopy) {
+        RichTextClipboardManagerLite(
             richTextState = state,
-            clipboard = clipboardManager
+            clipboard = clipboardManager,
+            plainText = rememberCopy?.first ?: "",
+            htmlText = rememberCopy?.second ?: "",
         )
     }
 
@@ -293,6 +309,81 @@ public fun BasicRichTextEditor(
             decorationBox = decorationBox,
         )
     }
+}
+
+@OptIn(ExperimentalRichTextApi::class)
+private fun prepareTextToCopy(state: RichTextState): Pair<String, String>? {
+    return if (!state.selection.collapsed && state.textFieldValue.text.isNotEmpty()) {
+
+        val htmlBackup = state.toHtml(selection = true)
+        val selection = if (state.selection.collapsed)
+            state.lastNonCollapsedSelection
+        else
+            state.selection
+
+        Log.d("RICH_CLIPBOARD_TAG", "setClipEntry (effective): $selection")
+        Log.d("RICH_CLIPBOARD_TAG", "selection.collapsed: ${selection.collapsed}")
+        Log.d(
+            "RICH_CLIPBOARD_TAG",
+            "richTextState.annotatedString: ${state.annotatedString}"
+        )
+        Log.d("RICH_CLIPBOARD_TAG", "copy html: $htmlBackup")
+
+        val annotatedString = buildAnnotatedString {
+            var index = 0
+
+            state.richParagraphList.fastForEachIndexed { i, paragraph ->
+                withStyle(
+                    paragraph.paragraphStyle.merge(
+                        paragraph.type.getStyle(state.config)
+                    )
+                ) {
+                    // --- startText ---
+                    val startText = paragraph.type.startText
+
+                    if (
+                        selection.min < index + startText.length &&
+                        selection.max > index
+                    ) {
+                        val selectedText = startText.substring(
+                            max(0, selection.min - index),
+                            min(selection.max - index, startText.length)
+                        )
+                        Log.d("RICH_CLIPBOARD_TAG", selectedText)
+                        append(selectedText)
+                    }
+
+                    index += startText.length
+
+                    // --- spans ---
+                    withStyle(RichSpanStyle.DefaultSpanStyle) {
+                        index = append(
+                            richSpanList = paragraph.children,
+                            startIndex = index,
+                            selection = selection,
+                            richTextConfig = state.config,
+                        )
+
+                        // --- перенос строки, архитектурный костыль ---
+                        if (!state.singleParagraphMode &&
+                            i != state.richParagraphList.lastIndex
+                        ) {
+                            if (
+                                selection.min < index + 1 &&
+                                selection.max >= index
+                            ) {
+                                appendLine()
+                            }
+                            index++
+                        }
+                    }
+                }
+            }
+        }
+        val plainText = annotatedString.text
+
+        (plainText to htmlBackup)
+    } else null
 }
 
 public typealias RichTextChangedListener = (RichTextState) -> Unit

@@ -365,7 +365,7 @@ internal object RichTextStateMarkdownParser : RichTextStateParser<String> {
         )
     }
 
-    override fun decode(richTextState: RichTextState): String {
+    override fun decode(richTextState: RichTextState, selection: Boolean): String {
         val builder = StringBuilder()
 
         var useLineBreak = false

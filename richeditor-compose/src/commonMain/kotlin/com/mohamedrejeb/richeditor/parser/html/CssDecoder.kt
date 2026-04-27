@@ -74,10 +74,10 @@ internal object CssDecoder {
                 cssStyleMap["font-style"] = decodeFontStyleToCss(fontStyle)
         }
 
-        if (spanStyle.letterSpacing.isSpecified)
-            decodeTextUnitToCss(spanStyle.letterSpacing)?.let { letterSpacing ->
-                cssStyleMap["letter-spacing"] = letterSpacing
-            }
+//        if (spanStyle.letterSpacing.isSpecified)
+//            decodeTextUnitToCss(spanStyle.letterSpacing)?.let { letterSpacing ->
+//                cssStyleMap["letter-spacing"] = letterSpacing
+//            }
 
         spanStyle.baselineShift?.let { baselineShift ->
             when (baselineShift) {

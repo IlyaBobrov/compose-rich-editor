@@ -1,5 +1,6 @@
 package com.mohamedrejeb.richeditor.model
 
+import android.util.Log
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -3829,6 +3830,40 @@ public class RichTextState internal constructor(
         return this
     }
 
+    public fun addHtmlFromBufferToCursorPosition(html: String) {
+        if (annotatedString.text.isEmpty() && selection.max == 0) {
+            val r = setHtml(html)
+            selection = r.selection
+            return
+        }
+
+        // 1. Декодируем HTML в список абзацев с помощью встроенного парсера
+        val encodedState = RichTextStateHtmlParser.encode(html)
+        val newParagraphs = encodedState.richParagraphList
+
+//        if (newParagraphs.isEmpty()) return
+
+        // 2. Получаем текущую позицию курсора (или конец выделения)
+        val position = selection.min
+
+        // 3. Если что-то выделено, удаляем выделенный текст перед вставкой
+        if (!selection.collapsed) {
+            removeSelectedText()
+        }
+
+
+        selection = TextRange(position)
+
+        // 4. Используем внутренний метод для вставки абзацев в указанную позицию
+        insertParagraphs(
+            newParagraphs = newParagraphs,
+            position = position
+        )
+
+        // 5. Обновляем визуальное представление
+        //finishTextEditing()
+    }
+
     /**
      * Вставляет HTML после текущего выделения.
      *
@@ -3957,18 +3992,22 @@ public class RichTextState internal constructor(
         newParagraphs: List<RichParagraph>,
         position: Int
     ) {
+        Log.d("RICH_CLIPBOARD_TAG", "insertParagraphs: position: $position")
         commitCompositionIfNeeded()
 
-        val beforeText = annotatedString.text.substring(0, position)
-        val afterText = annotatedString.text.substring(position)
+        // Баг 2 fix: coerceIn первым
+        val safePosition = position.coerceIn(0, annotatedString.text.length)
+
+        val beforeText = annotatedString.text.substring(0, safePosition)
+        val afterText = annotatedString.text.substring(safePosition)
         val sanitizedText = beforeText.trimEnd() + afterText
-        textFieldValue = textFieldValue.copy(text = sanitizedText, selection = TextRange(position))
+        textFieldValue =
+            textFieldValue.copy(text = sanitizedText, selection = TextRange(safePosition))
 
-
-        val position = position.coerceIn(0, annotatedString.text.length)
-
-        if (newParagraphs.isEmpty())
+        if (newParagraphs.isEmpty()) {
+            Log.e("RICH_CLIPBOARD_TAG", "newParagraph isEmpty")
             return
+        }
 
         if (richParagraphList.isEmpty())
             richParagraphList.add(RichParagraph())
@@ -3980,23 +4019,35 @@ public class RichTextState internal constructor(
 
         val firstNewParagraph = newParagraphs.first()
 
-        /*val richSpan = getRichSpanByTextIndex(
-            textIndex = position - 1,
-            ignoreCustomFiltering = true,
-        ) ?: return*/
-
         val richSpan = getRichSpanByTextIndex(
-            textIndex = if (position == 0) 0 else position - 1,
+            textIndex = if (safePosition == 0) 0 else safePosition - 1,
             ignoreCustomFiltering = true,
         ) ?: return
 
         val targetParagraph = richSpan.paragraph
         val paragraphIndex = richParagraphList.indexOf(targetParagraph)
 
-
-        if (position == annotatedString.text.length) {
-            val newParagraph = RichParagraph()
-            richParagraphList.add(paragraphIndex + 1, newParagraph)
+        // Баг 1 fix: вместо пустого параграфа — вставляем реальные newParagraphs
+        if (safePosition == annotatedString.text.length) {
+            if (newParagraphs.size == 1) {
+                firstNewParagraph.updateChildrenParagraph(firstNewParagraph)
+                // Мёрджим в последний параграф если он пустой, иначе добавляем новый
+                if (targetParagraph.isEmpty()) {
+                    targetParagraph.paragraphStyle = firstNewParagraph.paragraphStyle
+                    targetParagraph.type = firstNewParagraph.type
+                    targetParagraph.children.addAll(firstNewParagraph.children)
+                    targetParagraph.updateChildrenParagraph(targetParagraph)
+                } else {
+                    val newParagraph = firstNewParagraph.copy()
+                    richParagraphList.add(paragraphIndex + 1, newParagraph)
+                }
+            } else {
+                newParagraphs.forEachIndexed { i, para ->
+                    val newPara = para.copy()
+                    richParagraphList.add(paragraphIndex + 1 + i, newPara)
+                    newPara.updateChildrenParagraph(newPara)
+                }
+            }
             updateRichParagraphList()
             return
         }
@@ -4226,8 +4277,8 @@ public class RichTextState internal constructor(
      *
      * @return HTML-строка.
      */
-    public fun toHtml(): String {
-        return RichTextStateHtmlParser.decode(this)
+    public fun toHtml(selection: Boolean = false): String {
+        return RichTextStateHtmlParser.decode(this, selection)
     }
 
     /**
@@ -4236,7 +4287,7 @@ public class RichTextState internal constructor(
      * @return Строка в формате Markdown.
      */
     public fun toMarkdown(): String {
-        return RichTextStateMarkdownParser.decode(this)
+        return RichTextStateMarkdownParser.decode(this, false)
     }
 
     /**

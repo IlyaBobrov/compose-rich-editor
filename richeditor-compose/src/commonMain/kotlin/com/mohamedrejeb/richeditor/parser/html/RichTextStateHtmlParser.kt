@@ -1,5 +1,6 @@
 package com.mohamedrejeb.richeditor.parser.html
 
+import android.util.Log
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.sp
@@ -19,6 +20,7 @@ import com.mohamedrejeb.richeditor.paragraph.type.DefaultParagraph
 import com.mohamedrejeb.richeditor.paragraph.type.Heading
 import com.mohamedrejeb.richeditor.paragraph.type.OrderedList
 import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType
+import com.mohamedrejeb.richeditor.paragraph.type.ParagraphType.Companion.startText
 import com.mohamedrejeb.richeditor.paragraph.type.UnorderedList
 import com.mohamedrejeb.richeditor.parser.RichTextStateParser
 import com.mohamedrejeb.richeditor.parser.utils.BoldSpanStyle
@@ -41,6 +43,8 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
 
     @OptIn(ExperimentalRichTextApi::class)
     override fun encode(input: String): RichTextState {
+        Log.d("RICH_CLIPBOARD_TAG", "encode: input: $input")
+
         val openedTags = mutableListOf<Pair<String, Map<String, String>>>()
         val stringBuilder = StringBuilder()
         val richParagraphList = mutableListOf(RichParagraph())
@@ -61,7 +65,8 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
                 val addedText = KsoupEntities.decodeHtml(
                     removeHtmlTextExtraSpaces(
                         input = it,
-                        trimStart = stringBuilder.lastOrNull() == null || stringBuilder.lastOrNull()?.isWhitespace() == true || stringBuilder.lastOrNull() == '\n',
+                        trimStart = stringBuilder.lastOrNull() == null || stringBuilder.lastOrNull()
+                            ?.isWhitespace() == true || stringBuilder.lastOrNull() == '\n',
                     )
                 )
 
@@ -70,7 +75,8 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
                 stringBuilder.append(addedText)
 
                 val currentRichParagraph = richParagraphList.last()
-                val safeCurrentRichSpan = currentRichSpan ?: RichSpan(paragraph = currentRichParagraph)
+                val safeCurrentRichSpan =
+                    currentRichSpan ?: RichSpan(paragraph = currentRichParagraph)
 
                 if (safeCurrentRichSpan.children.isEmpty()) {
                     safeCurrentRichSpan.text += addedText
@@ -107,7 +113,8 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
                     currentRichSpan = null
                 }
 
-                val cssStyleMap = attributes["style"]?.let { CssEncoder.parseCssStyle(it) } ?: emptyMap()
+                val cssStyleMap =
+                    attributes["style"]?.let { CssEncoder.parseCssStyle(it) } ?: emptyMap()
                 val cssSpanStyle = CssEncoder.parseCssStyleMapToSpanStyle(cssStyleMap)
                 val tagSpanStyle = htmlElementsSpanStyleEncodeMap[name]
 
@@ -126,11 +133,14 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
                     currentRichParagraph.type is DefaultParagraph &&
                     isCurrentRichParagraphBlank
                 ) {
-                    val paragraphType = encodeHtmlElementToRichParagraphType(lastOpenedTag, currentListLevel)
+                    val paragraphType =
+                        encodeHtmlElementToRichParagraphType(lastOpenedTag, currentListLevel)
                     currentRichParagraph.type = paragraphType
 
-                    val cssParagraphStyle = CssEncoder.parseCssStyleMapToParagraphStyle(cssStyleMap, attributes)
-                    currentRichParagraph.paragraphStyle = currentRichParagraph.paragraphStyle.merge(cssParagraphStyle)
+                    val cssParagraphStyle =
+                        CssEncoder.parseCssStyleMapToParagraphStyle(cssStyleMap, attributes)
+                    currentRichParagraph.paragraphStyle =
+                        currentRichParagraph.paragraphStyle.merge(cssParagraphStyle)
                 }
 
                 if (isCurrentTagBlockElement) {
@@ -142,13 +152,16 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
 
                     var paragraphType: ParagraphType = DefaultParagraph()
                     if (name == "li" && lastOpenedTag != null) {
-                        paragraphType = encodeHtmlElementToRichParagraphType(lastOpenedTag, currentListLevel)
-                    }else if (name.startsWith("h") && name.length == 2 && name[1].isDigit()) {
+                        paragraphType =
+                            encodeHtmlElementToRichParagraphType(lastOpenedTag, currentListLevel)
+                    } else if (name.startsWith("h") && name.length == 2 && name[1].isDigit()) {
                         paragraphType = Heading(name[1].digitToInt())
                     }
-                    val cssParagraphStyle = CssEncoder.parseCssStyleMapToParagraphStyle(cssStyleMap, attributes)
+                    val cssParagraphStyle =
+                        CssEncoder.parseCssStyleMapToParagraphStyle(cssStyleMap, attributes)
 
-                    newRichParagraph.paragraphStyle = newRichParagraph.paragraphStyle.merge(cssParagraphStyle)
+                    newRichParagraph.paragraphStyle =
+                        newRichParagraph.paragraphStyle.merge(cssParagraphStyle)
                     newRichParagraph.type = paragraphType
 
                     if (!isCurrentRichParagraphBlank) {
@@ -280,103 +293,116 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
         )
     }
 
-    override fun decode(richTextState: RichTextState): String {
-        val builder = StringBuilder()
+    override fun decode(richTextState: RichTextState, selection: Boolean): String {
+        // Если selection=true и выделение не пустое — фильтруем по диапазону
+        val selectionRange: TextRange? =
+            if (selection && !richTextState.selection.collapsed)
+                richTextState.selection
+            else if (selection && !richTextState.lastNonCollapsedSelection.collapsed)
+                richTextState.lastNonCollapsedSelection
+            else
+                null
 
+        val builder = StringBuilder()
         val openedListTagNames = mutableListOf<String>()
         var lastParagraphGroupTagName: String? = null
         var lastParagraphGroupLevel = 0
         var isLastParagraphEmpty = false
-
         var currentListLevel = 0
 
+        // Вычислим глобальные офсеты параграфов через существующий механизм
+        // RichParagraph не хранит свой офсет напрямую — вычисляем накопленно,
+        // используя тот же алгоритм что в updateAnnotatedString:
+        // каждый параграф кроме первого добавляет 1 (line break символ ' ')
+        // + type.startText.length + сумма длин дочерних спанов
+
+        // Вспомогательная функция: получить текстовый диапазон параграфа
+        // (используем getRichSpanListByTextRange с полным диапазоном для вычисления офсета)
+        // Проще: пройдём по параграфам, накапливая offset вручную
+
+        data class ParagraphBounds(val start: Int, val end: Int)
+
+        fun computeParagraphBounds(): List<ParagraphBounds> {
+            var index = 0
+            return richTextState.richParagraphList.mapIndexed { i, para ->
+                if (i > 0) index++ // line break ' '
+                val start = index
+                index += para.type.startText.length
+                // Суммируем длины всех спанов рекурсивно
+                fun spanLength(span: RichSpan): Int =
+                    span.text.length + span.children.sumOf { spanLength(it) }
+                para.children.forEach { index += spanLength(it) }
+                ParagraphBounds(start, index)
+            }
+        }
+
+        val paragraphBounds = if (selectionRange != null) computeParagraphBounds() else null
+
         richTextState.richParagraphList.fastForEachIndexed { index, richParagraph ->
+
+            // --- Фильтрация по selection ---
+            if (selectionRange != null && paragraphBounds != null) {
+                val bounds = paragraphBounds[index]
+                // Параграф полностью вне selection — пропускаем
+                if (bounds.end <= selectionRange.min || bounds.start >= selectionRange.max)
+                    return@fastForEachIndexed
+            }
+
             val richParagraphType = richParagraph.type
             val isParagraphEmpty = richParagraph.isEmpty()
             val paragraphGroupTagName = decodeHtmlElementFromRichParagraphType(richParagraph.type)
 
-            val isLineBreak = richParagraph.children.size == 1 && richParagraph.children.first().text.isBlank()
+            val isLineBreak = richParagraph.children.size == 1 &&
+                    richParagraph.children.first().text.isBlank()
             if (isLineBreak) {
                 builder.append("<br>")
                 return@fastForEachIndexed
             }
 
             val paragraphLevel =
-                if (richParagraphType is ConfigurableListLevel)
-                    richParagraphType.level
-                else
-                    0
+                if (richParagraphType is ConfigurableListLevel) richParagraphType.level else 0
 
             val isParagraphList = paragraphGroupTagName in listOf("ol", "ul")
             val isLastParagraphList = lastParagraphGroupTagName in listOf("ol", "ul")
 
             fun isCloseParagraphGroup(): Boolean {
-                if (!isLastParagraphList)
-                    return false
-
-                if (paragraphLevel > lastParagraphGroupLevel)
-                    return false
-
-                if (
-                    lastParagraphGroupTagName == paragraphGroupTagName &&
+                if (!isLastParagraphList) return false
+                if (paragraphLevel > lastParagraphGroupLevel) return false
+                if (lastParagraphGroupTagName == paragraphGroupTagName &&
                     paragraphLevel == lastParagraphGroupLevel
-                )
-                    return false
-
+                ) return false
                 return true
             }
 
             fun isCloseAllOpenedTags(): Boolean {
-                if (isParagraphList)
-                    return false
-
-                if (!isLastParagraphList)
-                    return false
-
+                if (isParagraphList) return false
+                if (!isLastParagraphList) return false
                 return true
             }
 
             fun isOpenParagraphGroup(): Boolean {
-                if (!isParagraphList)
-                    return false
-
-                if (
-                    isLastParagraphList &&
+                if (!isParagraphList) return false
+                if (isLastParagraphList &&
                     paragraphGroupTagName == openedListTagNames.lastOrNull() &&
                     paragraphLevel < lastParagraphGroupLevel
-                )
-                    return false
-
-                if (
-                    isLastParagraphList &&
+                ) return false
+                if (isLastParagraphList &&
                     paragraphLevel == lastParagraphGroupLevel &&
                     paragraphGroupTagName == lastParagraphGroupTagName
-                )
-                    return false
-
+                ) return false
                 return true
             }
 
             if (isCloseAllOpenedTags()) {
-                openedListTagNames.fastForEachReversed {
-                    builder.append("</$it>")
-                }
+                openedListTagNames.fastForEachReversed { builder.append("</$it>") }
                 openedListTagNames.clear()
             } else if (isCloseParagraphGroup()) {
                 // Close last paragraph group tag
                 builder.append("</$lastParagraphGroupTagName>")
                 openedListTagNames.removeLastOrNull()
-
-                // We can move from nested level: 3 to nested level: 1,
-                // for this case we need to close more than one tag
-                if (
-                    isLastParagraphList &&
-                    paragraphLevel < lastParagraphGroupLevel
-                ) {
+                if (isLastParagraphList && paragraphLevel < lastParagraphGroupLevel) {
                     repeat(lastParagraphGroupLevel - paragraphLevel) {
-                        openedListTagNames.removeLastOrNull()?.let {
-                            builder.append("</$it>")
-                        }
+                        openedListTagNames.removeLastOrNull()?.let { builder.append("</$it>") }
                     }
                 }
             }
@@ -389,49 +415,45 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
             currentListLevel = paragraphLevel
 
             fun isLineBreak(): Boolean {
-                if (!isParagraphEmpty)
-                    return false
-
-                if (isParagraphList && lastParagraphGroupTagName != paragraphGroupTagName)
-                    return false
-
+                if (!isParagraphEmpty) return false
+                if (isParagraphList && lastParagraphGroupTagName != paragraphGroupTagName) return false
                 return true
             }
 
             // Add line break if the paragraph is empty
             if (isLineBreak()) {
-                val skipAddingBr =
-                    isLastParagraphEmpty && richParagraph.isEmpty() && index == richTextState.richParagraphList.lastIndex
-
-                if (!skipAddingBr)
-                    builder.append("<$BrElement>")
+                val skipAddingBr = isLastParagraphEmpty && richParagraph.isEmpty() &&
+                        index == richTextState.richParagraphList.lastIndex
+                if (!skipAddingBr) builder.append("<$BrElement>")
             } else {
                 // Create paragraph tag name
                 val headingLevel = richParagraph.getHeadingLevel()
+                val paragraphTagName = when {
+                    paragraphGroupTagName == "ol" || paragraphGroupTagName == "ul" -> "li"
+                    headingLevel != null -> "h$headingLevel"
+                    else -> "p"
+                }
 
-                val paragraphTagName =
-                    when {
-                        paragraphGroupTagName == "ol" || paragraphGroupTagName == "ul" -> "li"
-                        headingLevel != null -> "h$headingLevel"
-                        else -> "p"
-                    }
-
-                // Create paragraph css
-                val paragraphCssMap = CssDecoder.decodeParagraphStyleToCssStyleMap(richParagraph.paragraphStyle)
+                val paragraphCssMap =
+                    CssDecoder.decodeParagraphStyleToCssStyleMap(richParagraph.paragraphStyle)
                 val paragraphCss = CssDecoder.decodeCssStyleMap(paragraphCssMap)
 
                 // Append paragraph opening tag
                 builder.append("<$paragraphTagName")
-
-                if (headingLevel == null && paragraphCss.isNotBlank()) {
+                if (headingLevel == null && paragraphCss.isNotBlank())
                     builder.append(" style=\"$paragraphCss\"")
-                }
-
                 builder.append(">")
 
                 // Append paragraph children
                 richParagraph.children.fastForEach { richSpan ->
-                    builder.append(decodeRichSpanToHtml(richSpan, paragraphTagName = paragraphTagName))
+                    // Передаём selectionRange для обрезки текста спана
+                    builder.append(
+                        decodeRichSpanToHtml(
+                            richSpan = richSpan,
+                            paragraphTagName = paragraphTagName,
+                            selectionRange = selectionRange,
+                        )
+                    )
                 }
 
                 // Append paragraph closing tag
@@ -445,10 +467,7 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
             isLastParagraphEmpty = isParagraphEmpty
         }
 
-        // Close the remaining list tags
-        openedListTagNames.fastForEachReversed {
-            builder.append("</$it>")
-        }
+        openedListTagNames.fastForEachReversed { builder.append("</$it>") }
         openedListTagNames.clear()
 
         return builder.toString()
@@ -456,15 +475,36 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
 
     @OptIn(ExperimentalRichTextApi::class)
     private fun decodeRichSpanToHtml(
-        richSpan: RichSpan, parentFormattingTags: List<String> = emptyList(),
+        richSpan: RichSpan,
+        parentFormattingTags: List<String> = emptyList(),
         paragraphTagName: String? = null,
+        selectionRange: TextRange? = null,
     ): String {
-        val stringBuilder = StringBuilder()
-
-        // Check if span is empty
         if (richSpan.isEmpty()) return ""
 
-        // Get HTML element and attributes
+        // Обрезаем текст спана по selectionRange используя RichSpan.textRange
+        val spanText: String = if (selectionRange != null && richSpan.text.isNotEmpty()) {
+            val spanStart = richSpan.textRange.min
+            val spanEnd = richSpan.textRange.max
+            // Пересечение [spanStart, spanEnd) с [selectionRange.min, selectionRange.max)
+            val clampedStart = maxOf(spanStart, selectionRange.min)
+            val clampedEnd = minOf(spanEnd, selectionRange.max)
+            if (clampedStart >= clampedEnd) {
+                // Спан полностью вне selection — но дети могут быть внутри, продолжаем
+                ""
+            } else {
+                // Локальные индексы внутри span.text
+                val localStart = clampedStart - spanStart
+                val localEnd = clampedEnd - spanStart
+                richSpan.text.substring(localStart, localEnd)
+            }
+        } else {
+            richSpan.text
+        }
+
+        // Если ни текста ни детей попадающих в selection — пропускаем
+        // (проверка детей ниже)
+
         val spanHtml = decodeHtmlElementFromRichSpanStyle(richSpan.richSpanStyle)
         val tagName = spanHtml.first
         val tagAttributes = spanHtml.second
@@ -481,11 +521,26 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
             parentTagName = paragraphTagName
         )
         val spanCss = CssDecoder.decodeCssStyleMap(htmlStyleFormat.cssStyleMap)
-        val htmlTags = htmlStyleFormat.htmlTags.filter { it !in parentFormattingTags }
+        val htmlTags = htmlStyleFormat.htmlTags
+            .filter { it !in parentFormattingTags }
             .filter { it !in listOf("h1", "h2", "h3", "h4", "h5", "h6") }
 
-        val isRequireOpeningTag = tagName != "span" || tagAttributes.isNotEmpty() || spanCss.isNotEmpty()
+        val childrenHtml = richSpan.children.joinToString("") { child ->
+            decodeRichSpanToHtml(
+                richSpan = child,
+                parentFormattingTags = parentFormattingTags + htmlTags,
+                paragraphTagName = paragraphTagName,
+                selectionRange = selectionRange,
+            )
+        }
 
+        // Если ни текст ни дети не дают контента — пропускаем тег целиком
+        if (spanText.isEmpty() && childrenHtml.isEmpty()) return ""
+
+        val isRequireOpeningTag =
+            tagName != "span" || tagAttributes.isNotEmpty() || spanCss.isNotEmpty()
+
+        val stringBuilder = StringBuilder()
         if (isRequireOpeningTag) {
             // Append HTML element with attributes and style
             stringBuilder.append("<$tagName$tagAttributesStringBuilder")
@@ -493,32 +548,12 @@ internal object RichTextStateHtmlParser : RichTextStateParser<String> {
             stringBuilder.append(">")
         }
 
-        htmlTags.forEach {
-            stringBuilder.append("<$it>")
-        }
+        htmlTags.forEach { stringBuilder.append("<$it>") }
+        stringBuilder.append(escapeHtml(spanText))
+        stringBuilder.append(childrenHtml)
+        htmlTags.reversed().forEach { stringBuilder.append("</$it>") }
 
-        // Append text
-        stringBuilder.append(escapeHtml(richSpan.text))
-
-        // Append children
-        richSpan.children.fastForEach { child ->
-            stringBuilder.append(
-                decodeRichSpanToHtml(
-                    richSpan = child,
-                    parentFormattingTags = parentFormattingTags + htmlTags,
-                    paragraphTagName = paragraphTagName,
-                )
-            )
-        }
-
-        htmlTags.reversed().forEach {
-            stringBuilder.append("</$it>")
-        }
-
-        if (isRequireOpeningTag) {
-            // Append closing HTML element
-            stringBuilder.append("</$tagName>")
-        }
+        if (isRequireOpeningTag) stringBuilder.append("</$tagName>")
 
         return stringBuilder.toString()
     }

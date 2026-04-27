@@ -6,6 +6,6 @@ internal interface RichTextStateParser<T> {
 
     fun encode(input: T): RichTextState
 
-    fun decode(richTextState: RichTextState): T
+    fun decode(richTextState: RichTextState, selection: Boolean): T
 
 }
